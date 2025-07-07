@@ -14,7 +14,291 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          booking_date: string
+          client_id: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          provider_id: string | null
+          service_id: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          booking_date: string
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          provider_id?: string | null
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          booking_date?: string
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          provider_id?: string | null
+          service_id?: string | null
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          receiver_id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          receiver_id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          receiver_id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          updated_at: string | null
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone?: string | null
+          updated_at?: string | null
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Relationships: []
+      }
+      provider_profiles: {
+        Row: {
+          bio: string | null
+          business_name: string | null
+          experience_years: number | null
+          id: string
+          is_verified: boolean | null
+          location: string | null
+          rating: number | null
+          skills: string[] | null
+          total_reviews: number | null
+          working_hours: Json | null
+        }
+        Insert: {
+          bio?: string | null
+          business_name?: string | null
+          experience_years?: number | null
+          id: string
+          is_verified?: boolean | null
+          location?: string | null
+          rating?: number | null
+          skills?: string[] | null
+          total_reviews?: number | null
+          working_hours?: Json | null
+        }
+        Update: {
+          bio?: string | null
+          business_name?: string | null
+          experience_years?: number | null
+          id?: string
+          is_verified?: boolean | null
+          location?: string | null
+          rating?: number | null
+          skills?: string[] | null
+          total_reviews?: number | null
+          working_hours?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          client_id: string | null
+          comment: string | null
+          created_at: string | null
+          id: string
+          provider_id: string | null
+          provider_response: string | null
+          rating: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          client_id?: string | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          provider_id?: string | null
+          provider_response?: string | null
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          client_id?: string | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          provider_id?: string | null
+          provider_response?: string | null
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          category: Database["public"]["Enums"]["service_category"]
+          created_at: string | null
+          description: string | null
+          duration: number
+          id: string
+          is_active: boolean | null
+          price: number
+          provider_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["service_category"]
+          created_at?: string | null
+          description?: string | null
+          duration: number
+          id?: string
+          is_active?: boolean | null
+          price: number
+          provider_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["service_category"]
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          id?: string
+          is_active?: boolean | null
+          price?: number
+          provider_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +307,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "declined"
+      service_category:
+        | "massage"
+        | "personal_training"
+        | "beauty"
+        | "physiotherapy"
+        | "wellness"
+        | "other"
+      user_type: "client" | "provider"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +447,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      booking_status: [
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "declined",
+      ],
+      service_category: [
+        "massage",
+        "personal_training",
+        "beauty",
+        "physiotherapy",
+        "wellness",
+        "other",
+      ],
+      user_type: ["client", "provider"],
+    },
   },
 } as const
