@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./components/auth/AuthPage";
 import Dashboard from "./components/dashboard/Dashboard";
+import ServicesPage from "./pages/ServicesPage";
+import ChatPage from "./pages/ChatPage";
+import BookingsPage from "./pages/BookingsPage";
 
 const queryClient = new QueryClient();
 
@@ -17,8 +20,11 @@ const AppRoutes = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-lg font-medium text-gray-600">Loading BodyConnect...</p>
+        </div>
       </div>
     );
   }
@@ -33,6 +39,18 @@ const AppRoutes = () => {
       <Route 
         path="/dashboard" 
         element={user ? <Dashboard /> : <Navigate to="/auth" replace />} 
+      />
+      <Route 
+        path="/services" 
+        element={user ? <ServicesPage /> : <Navigate to="/auth" replace />} 
+      />
+      <Route 
+        path="/chat" 
+        element={user ? <ChatPage /> : <Navigate to="/auth" replace />} 
+      />
+      <Route 
+        path="/bookings" 
+        element={user ? <BookingsPage /> : <Navigate to="/auth" replace />} 
       />
       <Route path="*" element={<NotFound />} />
     </Routes>

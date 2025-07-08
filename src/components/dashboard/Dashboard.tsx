@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
-import { Heart, MapPin, Phone, Mail, User, Star, Calendar, Settings, LogOut } from 'lucide-react';
+import { Heart, MapPin, Phone, Mail, User, Star, Calendar, Settings, LogOut, MessageCircle, Search, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, signOut } = useMongoAuth();
@@ -50,7 +51,7 @@ const Dashboard = () => {
             <div className="flex items-center space-x-4">
               <Heart className="h-8 w-8 text-purple-600" />
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                SoulSync
+                BodyConnect
               </h1>
             </div>
             <div className="flex items-center space-x-4">
@@ -135,11 +136,60 @@ const Dashboard = () => {
                   <CardTitle className="text-2xl">Welcome back, {user.name}!</CardTitle>
                   <CardDescription className="text-purple-100">
                     {user.role === 'provider' 
-                      ? "Manage your services and connect with clients"
-                      : "Discover amazing services and connect with providers"
+                      ? "Manage your services and connect with clients on BodyConnect"
+                      : "Discover amazing body services and connect with professionals"
                     }
                   </CardDescription>
                 </CardHeader>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                  <CardDescription>Access your most used features</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Link to="/services">
+                      <Button 
+                        variant="outline" 
+                        className="w-full h-20 flex flex-col items-center justify-center space-y-2 hover:bg-purple-50 hover:border-purple-300"
+                      >
+                        <Search className="h-6 w-6 text-purple-600" />
+                        <span className="text-sm">Browse Services</span>
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/bookings">
+                      <Button 
+                        variant="outline" 
+                        className="w-full h-20 flex flex-col items-center justify-center space-y-2 hover:bg-pink-50 hover:border-pink-300"
+                      >
+                        <Calendar className="h-6 w-6 text-pink-600" />
+                        <span className="text-sm">My Bookings</span>
+                      </Button>
+                    </Link>
+                    
+                    <Link to="/chat">
+                      <Button 
+                        variant="outline" 
+                        className="w-full h-20 flex flex-col items-center justify-center space-y-2 hover:bg-rose-50 hover:border-rose-300"
+                      >
+                        <MessageCircle className="h-6 w-6 text-rose-600" />
+                        <span className="text-sm">Messages</span>
+                      </Button>
+                    </Link>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-20 flex flex-col items-center justify-center space-y-2 hover:bg-orange-50 hover:border-orange-300"
+                    >
+                      <BookOpen className="h-6 w-6 text-orange-600" />
+                      <span className="text-sm">Reviews</span>
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
 
               {/* Stats Cards */}

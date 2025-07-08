@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
-import { Heart, Sparkles, Users, Star } from 'lucide-react';
+import { Heart, Sparkles, Users, Star, Shield, Calendar } from 'lucide-react';
 
 const AuthPage = () => {
   const { signIn, signUp } = useMongoAuth();
@@ -54,42 +55,6 @@ const AuthPage = () => {
       await signUp(userData);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Animations variants
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6
-      }
-    }
-  };
-
-  const featureVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        delay: 0.4
-      }
-    }
-  };
-
-  const backgroundElementVariants = {
-    animate: {
-      scale: [1, 1.2, 1],
-      rotate: [0, 180, 360],
-      transition: {
-        duration: 20,
-        repeat: Infinity,
-        ease: "linear"
-      }
     }
   };
 
@@ -142,10 +107,10 @@ const AuthPage = () => {
               </div>
             </motion.div>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              SoulSync
+              BodyConnect
             </CardTitle>
             <CardDescription className="text-gray-600 text-lg">
-              Connect with your perfect companion
+              Connect with trusted body service professionals
             </CardDescription>
           </CardHeader>
 
@@ -327,15 +292,15 @@ const AuthPage = () => {
         >
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
             <Users className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Quality Connections</p>
+            <p className="text-sm font-medium text-gray-700">Verified Professionals</p>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
-            <Star className="h-6 w-6 text-pink-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Verified Profiles</p>
+            <Shield className="h-6 w-6 text-pink-600 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-700">Secure Booking</p>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
-            <Sparkles className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Premium Services</p>
+            <Calendar className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-700">Easy Scheduling</p>
           </div>
         </motion.div>
       </motion.div>

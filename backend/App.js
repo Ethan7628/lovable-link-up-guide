@@ -1,8 +1,9 @@
+
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
-// Import routes (only once)
+// Import routes
 const authRoutes = require('./routes/auth');
 const bookingRoutes = require('./routes/bookings');
 const chatRoutes = require('./routes/chat');
@@ -54,7 +55,7 @@ app.use(cors({
         'Accept',
         'Origin'
     ],
-    optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+    optionsSuccessStatus: 200
 }));
 
 // Body parser middleware with better limits
@@ -77,12 +78,13 @@ app.use((req, res, next) => {
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
+        service: 'BodyConnect API',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development'
     });
 });
 
-// Mount all routes (only once)
+// Mount all routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/chat', chatRoutes);
@@ -92,7 +94,7 @@ app.use('/api/services', serviceRoutes);
 // Test route
 app.get('/api/test', (req, res) => {
     res.json({
-        message: 'Backend is working!',
+        message: 'BodyConnect Backend is working!',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development'
     });
