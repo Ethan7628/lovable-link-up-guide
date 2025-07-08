@@ -21,6 +21,11 @@ interface User {
   earnings?: number;
 }
 
+interface AuthResponse {
+  token?: string;
+  user?: User;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -62,7 +67,7 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const response = await apiClient.getProfile();
       if (response.success && response.data) {
         console.log('MongoAuth: User authenticated', response.data);
-        setUser(response.data);
+        setUser(response.data as User);
       } else {
         console.log('MongoAuth: Invalid token, clearing storage');
         localStorage.removeItem('token');
@@ -93,12 +98,14 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (response.success && response.data) {
         console.log('MongoAuth: Sign up successful', response.data);
         
+        const authData = response.data as AuthResponse;
+        
         // Store token and user data
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
+        if (authData.token) {
+          localStorage.setItem('token', authData.token);
         }
-        if (response.data.user) {
-          setUser(response.data.user);
+        if (authData.user) {
+          setUser(authData.user);
         }
         
         toast({
@@ -137,12 +144,14 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (response.success && response.data) {
         console.log('MongoAuth: Sign in successful', response.data);
         
+        const authData = response.data as AuthResponse;
+        
         // Store token and user data
-        if (response.data.token) {
-          localStorage.setItem('token', response.data.token);
+        if (authData.token) {
+          localStorage.setItem('token', authData.token);
         }
-        if (response.data.user) {
-          setUser(response.data.user);
+        if (authData.user) {
+          setUser(authData.user);
         }
         
         toast({
@@ -187,7 +196,7 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const response = await apiClient.updateProfile(profileData);
       
       if (response.success && response.data) {
-        setUser(response.data);
+        setUser(response.data as User);
         toast({
           title: "Profile updated",
           description: "Your profile has been updated successfully"
