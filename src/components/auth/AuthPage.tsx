@@ -1,286 +1,343 @@
-
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { User, Briefcase, Mail, Lock, UserPlus, LogIn, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMongoAuth } from '@/contexts/MongoAuthContext';
+import { Heart, Sparkles, Users, Star } from 'lucide-react';
 
 const AuthPage = () => {
-  const { signUp, signIn } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { signIn, signUp } = useMongoAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [signUpData, setSignUpData] = useState({
-    email: '',
-    password: '',
-    first_name: '',
-    last_name: '',
-    user_type: 'client' as 'client' | 'provider'
-  });
-
+  // Sign In form state
   const [signInData, setSignInData] = useState({
     email: '',
     password: ''
   });
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    await signUp(signUpData.email, signUpData.password, {
-      first_name: signUpData.first_name,
-      last_name: signUpData.last_name,
-      user_type: signUpData.user_type
-    });
-    
-    setLoading(false);
-  };
+  // Sign Up form state
+  const [signUpData, setSignUpData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    role: 'buyer' as 'buyer' | 'provider',
+    age: '',
+    bio: '',
+    location: ''
+  });
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
     
-    await signIn(signInData.email, signInData.password);
+    try {
+      await signIn(signInData.email, signInData.password);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
     
-    setLoading(false);
+    try {
+      const userData = {
+        ...signUpData,
+        age: signUpData.age ? parseInt(signUpData.age) : undefined
+      };
+      await signUp(userData);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Animations variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6
+      }
+    }
+  };
+
+  const featureVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        delay: 0.4
+      }
+    }
+  };
+
+  const backgroundElementVariants = {
+    animate: {
+      scale: [1, 1.2, 1],
+      rotate: [0, 180, 360],
+      transition: {
+        duration: 20,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-4 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute -top-4 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+        <motion.div
+          className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            rotate: [360, 180, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10"
+        transition={{ duration: 0.6 }}
+        className="w-full max-w-md relative z-10"
       >
-        <Card className="w-full max-w-md backdrop-blur-sm bg-white/90 shadow-2xl border-0">
-          <CardHeader className="text-center space-y-2">
+        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+          <CardHeader className="space-y-1 text-center pb-8">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4"
+              className="flex justify-center mb-4"
             >
-              <Sparkles className="w-8 h-8 text-white" />
+              <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full">
+                <Heart className="h-8 w-8 text-white" />
+              </div>
             </motion.div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              BodyConnect
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              SoulSync
             </CardTitle>
-            <CardDescription className="text-gray-600">
-              Connect with trusted body service providers
+            <CardDescription className="text-gray-600 text-lg">
+              Connect with your perfect companion
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="signin" className="flex items-center gap-2">
-                  <LogIn className="w-4 h-4" />
+                <TabsTrigger value="signin" className="text-sm font-medium">
                   Sign In
                 </TabsTrigger>
-                <TabsTrigger value="signup" className="flex items-center gap-2">
-                  <UserPlus className="w-4 h-4" />
+                <TabsTrigger value="signup" className="text-sm font-medium">
                   Sign Up
                 </TabsTrigger>
               </TabsList>
-              
-              <TabsContent value="signin">
-                <motion.form
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3 }}
-                  onSubmit={handleSignIn}
-                  className="space-y-4"
-                >
+
+              <TabsContent value="signin" className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="text-sm font-medium">
-                      Email Address
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={signInData.email}
-                        onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
-                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 transition-colors"
-                        required
-                      />
-                    </div>
+                    <Label htmlFor="signin-email">Email</Label>
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={signInData.email}
+                      onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+                      required
+                      className="h-11"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password" className="text-sm font-medium">
-                      Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="signin-password"
-                        type="password"
-                        placeholder="Enter your password"
-                        value={signInData.password}
-                        onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
-                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 transition-colors"
-                        required
-                      />
-                    </div>
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={signInData.password}
+                      onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                      required
+                      className="h-11"
+                    />
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-[1.02]" 
-                    disabled={loading}
+                    className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200"
+                    disabled={isLoading}
                   >
-                    {loading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Signing in...
-                      </div>
+                    {isLoading ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                      />
                     ) : (
                       'Sign In'
                     )}
                   </Button>
-                </motion.form>
+                </form>
               </TabsContent>
-              
-              <TabsContent value="signup">
-                <motion.form
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3 }}
-                  onSubmit={handleSignUp}
-                  className="space-y-4"
-                >
+
+              <TabsContent value="signup" className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="first-name" className="text-sm font-medium">
-                        First Name
-                      </Label>
+                      <Label htmlFor="signup-name">Full Name</Label>
                       <Input
-                        id="first-name"
-                        placeholder="John"
-                        value={signUpData.first_name}
-                        onChange={(e) => setSignUpData(prev => ({ ...prev, first_name: e.target.value }))}
-                        className="h-12 border-gray-200 focus:border-blue-500 transition-colors"
+                        id="signup-name"
+                        placeholder="Your full name"
+                        value={signUpData.name}
+                        onChange={(e) => setSignUpData({ ...signUpData, name: e.target.value })}
                         required
+                        className="h-11"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="last-name" className="text-sm font-medium">
-                        Last Name
-                      </Label>
+                      <Label htmlFor="signup-phone">Phone</Label>
                       <Input
-                        id="last-name"
-                        placeholder="Doe"
-                        value={signUpData.last_name}
-                        onChange={(e) => setSignUpData(prev => ({ ...prev, last_name: e.target.value }))}
-                        className="h-12 border-gray-200 focus:border-blue-500 transition-colors"
+                        id="signup-phone"
+                        placeholder="Phone number"
+                        value={signUpData.phone}
+                        onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
                         required
+                        className="h-11"
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-sm font-medium">
-                      Email Address
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={signUpData.email}
-                        onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
-                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 transition-colors"
-                        required
-                      />
-                    </div>
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={signUpData.email}
+                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                      required
+                      className="h-11"
+                    />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="text-sm font-medium">
-                      Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="Create a password"
+                      value={signUpData.password}
+                      onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-role">I am a</Label>
+                      <Select 
+                        value={signUpData.role} 
+                        onValueChange={(value: 'buyer' | 'provider') => setSignUpData({ ...signUpData, role: value })}
+                      >
+                        <SelectTrigger className="h-11">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="buyer">Client</SelectItem>
+                          <SelectItem value="provider">Service Provider</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-age">Age</Label>
                       <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="Create a password"
-                        value={signUpData.password}
-                        onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
-                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 transition-colors"
-                        required
+                        id="signup-age"
+                        type="number"
+                        placeholder="Your age"
+                        value={signUpData.age}
+                        onChange={(e) => setSignUpData({ ...signUpData, age: e.target.value })}
+                        className="h-11"
                       />
                     </div>
                   </div>
-                  
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">I am a:</Label>
-                    <RadioGroup
-                      value={signUpData.user_type}
-                      onValueChange={(value: 'client' | 'provider') => 
-                        setSignUpData(prev => ({ ...prev, user_type: value }))
-                      }
-                      className="space-y-3"
-                    >
-                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                        <RadioGroupItem value="client" id="client" />
-                        <Label htmlFor="client" className="flex items-center gap-3 cursor-pointer flex-1">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <div className="font-medium">Client</div>
-                            <div className="text-sm text-gray-500">Looking for services</div>
-                          </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                        <RadioGroupItem value="provider" id="provider" />
-                        <Label htmlFor="provider" className="flex items-center gap-3 cursor-pointer flex-1">
-                          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                            <Briefcase className="w-5 h-5 text-purple-600" />
-                          </div>
-                          <div>
-                            <div className="font-medium">Service Provider</div>
-                            <div className="text-sm text-gray-500">Offering services</div>
-                          </div>
-                        </Label>
-                      </div>
-                    </RadioGroup>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-location">Location</Label>
+                    <Input
+                      id="signup-location"
+                      placeholder="City, Country"
+                      value={signUpData.location}
+                      onChange={(e) => setSignUpData({ ...signUpData, location: e.target.value })}
+                      className="h-11"
+                    />
                   </div>
-                  
+
                   <Button 
                     type="submit" 
-                    className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-lg transition-all duration-200 transform hover:scale-[1.02]" 
-                    disabled={loading}
+                    className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200"
+                    disabled={isLoading}
                   >
-                    {loading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Creating account...
-                      </div>
+                    {isLoading ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                      />
                     ) : (
                       'Create Account'
                     )}
                   </Button>
-                </motion.form>
+                </form>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Feature highlights */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="mt-8 grid grid-cols-3 gap-4 text-center"
+        >
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+            <Users className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-700">Quality Connections</p>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+            <Star className="h-6 w-6 text-pink-600 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-700">Verified Profiles</p>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+            <Sparkles className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-700">Premium Services</p>
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   );
