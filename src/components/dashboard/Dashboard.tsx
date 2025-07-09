@@ -1,11 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
+import SocialFeed from '@/components/feed/SocialFeed';
+import CreatePost from '@/components/posts/CreatePost';
 import { 
   Heart, 
   MessageSquare, 
@@ -21,12 +24,16 @@ import {
   Clock,
   Award,
   Menu,
-  LogOut
+  LogOut,
+  Plus,
+  Home,
+  Camera
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, signOut } = useMongoAuth();
+  const [refreshFeed, setRefreshFeed] = useState(0);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -95,6 +102,10 @@ const Dashboard = () => {
     { label: 'Messages', value: '24', icon: MessageSquare, change: '+12 today' },
   ];
 
+  const handlePostCreated = () => {
+    setRefreshFeed(prev => prev + 1);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
       {/* Header */}
@@ -132,147 +143,207 @@ const Dashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-8"
-        >
-          {/* Welcome Section */}
-          <motion.div variants={itemVariants}>
-            <Card className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 shadow-lg">
-              <CardContent className="p-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-3xl font-bold mb-2">
-                      Welcome back, {user?.name || 'User'}!
-                    </h2>
-                    <p className="text-purple-100 text-lg">
-                      Ready to discover amazing body services today?
-                    </p>
-                  </div>
-                  <div className="hidden md:block">
-                    <div className="text-6xl opacity-20">🌟</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+        <Tabs defaultValue="feed" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="feed" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Feed
+            </TabsTrigger>
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            {user?.role === 'provider' && (
+              <TabsTrigger value="create" className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Post
+              </TabsTrigger>
+            )}
+          </TabsList>
 
-          {/* Quick Actions */}
-          <motion.div variants={itemVariants}>
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {quickActions.map((action, index) => (
-                <motion.div
-                  key={action.name}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Link to={action.href}>
-                    <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-                      <CardContent className="p-6 text-center">
-                        <div className={`w-12 h-12 ${action.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                          <action.icon className="h-6 w-6 text-white" />
-                        </div>
-                        <h4 className="font-semibold text-gray-900 text-sm">{action.name}</h4>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Stats Overview */}
-          <motion.div variants={itemVariants}>
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Your Activity</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                          <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                          <p className="text-xs text-green-600 font-medium">{stat.change}</p>
-                        </div>
-                        <div className="bg-purple-100 p-3 rounded-full">
-                          <stat.icon className="h-6 w-6 text-purple-600" />
-                        </div>
+          {/* Social Feed Tab */}
+          <TabsContent value="feed" className="space-y-6">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.div variants={itemVariants}>
+                <Card className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 shadow-lg mb-6">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold mb-2">
+                          Welcome to BodyConnect Feed!
+                        </h2>
+                        <p className="text-purple-100 text-lg">
+                          Discover amazing services from top providers
+                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+                      <div className="hidden md:block">
+                        <div className="text-4xl opacity-20">🌟</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
-          {/* Recent Bookings */}
-          <motion.div variants={itemVariants}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900">Recent Bookings</h3>
-              <Link to="/bookings">
-                <Button variant="outline" className="flex items-center gap-2">
-                  View All
-                  <Calendar className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="space-y-4">
-              {recentBookings.map((booking) => (
-                <motion.div
-                  key={booking.id}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.01 }}
-                >
-                  <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={booking.avatar} alt={booking.providerName} />
-                            <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                              {booking.providerName.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h4 className="font-semibold text-gray-900">{booking.serviceName}</h4>
-                            <p className="text-sm text-gray-600">with {booking.providerName}</p>
-                            <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-sm text-gray-500 flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {new Date(booking.date).toLocaleDateString()}
-                              </span>
-                              <span className="text-sm text-gray-500 flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {booking.time}
-                              </span>
+              <SocialFeed key={refreshFeed} />
+            </motion.div>
+          </TabsContent>
+
+          {/* Create Post Tab */}
+          {user?.role === 'provider' && (
+            <TabsContent value="create">
+              <CreatePost onPostCreated={handlePostCreated} />
+            </TabsContent>
+          )}
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-8"
+            >
+              {/* Welcome Section */}
+              <motion.div variants={itemVariants}>
+                <Card className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 shadow-lg">
+                  <CardContent className="p-8">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-3xl font-bold mb-2">
+                          Welcome back, {user?.name || 'User'}!
+                        </h2>
+                        <p className="text-purple-100 text-lg">
+                          Ready to discover amazing body services today?
+                        </p>
+                      </div>
+                      <div className="hidden md:block">
+                        <div className="text-6xl opacity-20">🌟</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Quick Actions */}
+              <motion.div variants={itemVariants}>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {quickActions.map((action, index) => (
+                    <motion.div
+                      key={action.name}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Link to={action.href}>
+                        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                          <CardContent className="p-6 text-center">
+                            <div className={`w-12 h-12 ${action.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
+                              <action.icon className="h-6 w-6 text-white" />
+                            </div>
+                            <h4 className="font-semibold text-gray-900 text-sm">{action.name}</h4>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Stats Overview */}
+              <motion.div variants={itemVariants}>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Your Activity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {stats.map((stat, index) => (
+                    <motion.div
+                      key={stat.label}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                              <p className="text-xs text-green-600 font-medium">{stat.change}</p>
+                            </div>
+                            <div className="bg-purple-100 p-3 rounded-full">
+                              <stat.icon className="h-6 w-6 text-purple-600" />
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge 
-                            variant={booking.status === 'confirmed' ? 'default' : 'secondary'}
-                            className={booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : ''}
-                          >
-                            {booking.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </motion.div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Recent Bookings */}
+              <motion.div variants={itemVariants}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900">Recent Bookings</h3>
+                  <Link to="/bookings">
+                    <Button variant="outline" className="flex items-center gap-2">
+                      View All
+                      <Calendar className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+                <div className="space-y-4">
+                  {recentBookings.map((booking) => (
+                    <motion.div
+                      key={booking.id}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.01 }}
+                    >
+                      <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <Avatar className="h-12 w-12">
+                                <AvatarImage src={booking.avatar} alt={booking.providerName} />
+                                <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                                  {booking.providerName.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h4 className="font-semibold text-gray-900">{booking.serviceName}</h4>
+                                <p className="text-sm text-gray-600">with {booking.providerName}</p>
+                                <div className="flex items-center space-x-4 mt-1">
+                                  <span className="text-sm text-gray-500 flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    {new Date(booking.date).toLocaleDateString()}
+                                  </span>
+                                  <span className="text-sm text-gray-500 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {booking.time}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge 
+                                variant={booking.status === 'confirmed' ? 'default' : 'secondary'}
+                                className={booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : ''}
+                              >
+                                {booking.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

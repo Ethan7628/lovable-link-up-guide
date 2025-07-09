@@ -17,6 +17,13 @@ class ApiClient {
     };
   }
 
+  private getMultipartHeaders(): HeadersInit {
+    const token = localStorage.getItem('token');
+    return {
+      ...(token && { 'x-auth-token': token }),
+    };
+  }
+
   async request<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     try {
       console.log(`Making API request to: ${API_BASE_URL}${endpoint}`);
@@ -58,6 +65,36 @@ class ApiClient {
     }
   }
 
+  async uploadRequest<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+    try {
+      console.log(`Making upload request to: ${API_BASE_URL}${endpoint}`);
+      
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: this.getMultipartHeaders(),
+        body: formData,
+      });
+
+      console.log(`Upload response status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ msg: 'Upload failed' }));
+        throw new Error(errorData.msg || errorData.message || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Upload response data:', data);
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Upload request failed:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Upload failed' 
+      };
+    }
+  }
+
   // Auth endpoints
   async register(userData: {
     name: string;
@@ -95,6 +132,47 @@ class ApiClient {
     });
   }
 
+  // Posts endpoints
+  async getPosts(params?: { page?: number; limit?: number; category?: string; location?: string }) {
+    const queryString = params ? '?' + new URLSearchParams(
+      Object.entries(params).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null) {
+          acc[key] = value.toString();
+        }
+        return acc;
+      }, {} as Record<string, string>)
+    ).toString() : '';
+    
+    return this.request(`/posts${queryString}`);
+  }
+
+  async createPost(formData: FormData) {
+    return this.uploadRequest('/posts', formData);
+  }
+
+  async getMyPosts() {
+    return this.request('/posts/my-posts');
+  }
+
+  async likePost(postId: string) {
+    return this.request(`/posts/${postId}/like`, {
+      method: 'PUT',
+    });
+  }
+
+  async addComment(postId: string, comment: string) {
+    return this.request(`/posts/${postId}/comment`, {
+      method: 'POST',
+      body: JSON.stringify({ comment }),
+    });
+  }
+
+  async deletePost(postId: string) {
+    return this.request(`/posts/${postId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Services endpoints
   async getServices() {
     return this.request('/services');
@@ -117,6 +195,25 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(bookingData),
     });
+  }
+
+  // Payment endpoints
+  async createPaymentIntent(amount: number, serviceId?: string, providerId?: string) {
+    return this.request('/payments/create-intent', {
+      method: 'POST',
+      body: JSON.stringify({ amount, serviceId, providerId }),
+    });
+  }
+
+  async confirmPayment(paymentIntentId: string) {
+    return this.request('/payments/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ paymentIntentId }),
+    });
+  }
+
+  async getPaymentHistory() {
+    return this.request('/payments/history');
   }
 }
 

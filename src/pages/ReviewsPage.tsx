@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -27,6 +26,22 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+interface ReviewData {
+  id: number;
+  serviceName: string;
+  rating: number;
+  comment: string;
+  date: string;
+  helpful: number;
+  type: 'given' | 'received';
+  providerName?: string;
+  providerAvatar?: string | null;
+  clientName?: string;
+  clientAvatar?: string | null;
+  providerResponse?: string;
+  responded?: boolean;
+}
+
 const ReviewsPage = () => {
   const { user } = useMongoAuth();
   const { toast } = useToast();
@@ -40,9 +55,10 @@ const ReviewsPage = () => {
   });
 
   // Mock data - would come from API
-  const myReviews = [
+  const myReviews: ReviewData[] = [
     {
       id: 1,
+      type: 'given',
       providerName: "Sarah Johnson",
       providerAvatar: null,
       serviceName: "Deep Tissue Massage",
@@ -54,6 +70,7 @@ const ReviewsPage = () => {
     },
     {
       id: 2,
+      type: 'given',
       providerName: "Mike Williams",
       providerAvatar: null,
       serviceName: "Personal Training Session",
@@ -61,24 +78,14 @@ const ReviewsPage = () => {
       comment: "Great workout session. Mike pushed me to achieve my goals and provided excellent guidance.",
       date: "2024-01-10",
       helpful: 8,
-      providerResponse: null
-    },
-    {
-      id: 3,
-      providerName: "Emma Davis",
-      providerAvatar: null,
-      serviceName: "Facial Treatment",
-      rating: 5,
-      comment: "Incredible facial treatment! My skin feels amazing and Emma was so knowledgeable about skincare.",
-      date: "2024-01-05",
-      helpful: 15,
-      providerResponse: "So happy you loved the treatment! Looking forward to your next visit."
+      providerResponse: undefined
     }
   ];
 
-  const receivedReviews = [
+  const receivedReviews: ReviewData[] = [
     {
       id: 1,
+      type: 'received',
       clientName: "John Doe",
       clientAvatar: null,
       serviceName: "Yoga Session",
@@ -90,6 +97,7 @@ const ReviewsPage = () => {
     },
     {
       id: 2,
+      type: 'received',
       clientName: "Jane Smith",
       clientAvatar: null,
       serviceName: "Massage Therapy",
@@ -101,22 +109,22 @@ const ReviewsPage = () => {
     }
   ];
 
-  const allReviews = [
-    ...myReviews.map(r => ({ ...r, type: 'given' })),
-    ...receivedReviews.map(r => ({ ...r, type: 'received' }))
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const allReviews: ReviewData[] = [
+    ...myReviews,
+    ...receivedReviews
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const filteredReviews = allReviews.filter(review => {
     const searchTerm = searchQuery.toLowerCase();
+    const displayName = review.type === 'given' ? review.providerName : review.clientName;
     return (
-      review.providerName?.toLowerCase().includes(searchTerm) ||
-      review.clientName?.toLowerCase().includes(searchTerm) ||
+      displayName?.toLowerCase().includes(searchTerm) ||
       review.serviceName.toLowerCase().includes(searchTerm) ||
       review.comment.toLowerCase().includes(searchTerm)
     );
   });
 
-  const renderStars = (rating) => {
+  const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
@@ -261,18 +269,18 @@ const ReviewsPage = () => {
                         <div className="flex items-start space-x-4">
                           <Avatar className="h-12 w-12">
                             <AvatarImage 
-                              src={review.providerAvatar || review.clientAvatar} 
-                              alt={review.providerName || review.clientName} 
+                              src={review.type === 'given' ? review.providerAvatar || '' : review.clientAvatar || ''} 
+                              alt={review.type === 'given' ? review.providerName : review.clientName} 
                             />
                             <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                              {(review.providerName || review.clientName).charAt(0)}
+                              {(review.type === 'given' ? review.providerName : review.clientName)?.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-2">
                               <div>
                                 <h3 className="font-semibold text-gray-900">
-                                  {review.providerName || review.clientName}
+                                  {review.type === 'given' ? review.providerName : review.clientName}
                                 </h3>
                                 <p className="text-sm text-gray-600">{review.serviceName}</p>
                               </div>
@@ -304,11 +312,11 @@ const ReviewsPage = () => {
                                 </Button>
                               )}
                             </div>
-                            {(review.providerResponse || review.type === 'received') && review.responded && (
+                            {((review.type === 'given' && review.providerResponse) || (review.type === 'received' && review.responded)) && (
                               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                                 <p className="text-sm font-medium text-gray-900 mb-1">Response:</p>
                                 <p className="text-sm text-gray-700">
-                                  {review.providerResponse || "Thank you for your feedback!"}
+                                  {review.type === 'given' ? review.providerResponse : "Thank you for your feedback!"}
                                 </p>
                               </div>
                             )}
@@ -335,9 +343,9 @@ const ReviewsPage = () => {
                       <CardContent className="p-6">
                         <div className="flex items-start space-x-4">
                           <Avatar className="h-12 w-12">
-                            <AvatarImage src={review.providerAvatar} alt={review.providerName} />
+                            <AvatarImage src={review.providerAvatar || ''} alt={review.providerName} />
                             <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                              {review.providerName.charAt(0)}
+                              {review.providerName?.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
@@ -390,9 +398,9 @@ const ReviewsPage = () => {
                       <CardContent className="p-6">
                         <div className="flex items-start space-x-4">
                           <Avatar className="h-12 w-12">
-                            <AvatarImage src={review.clientAvatar} alt={review.clientName} />
+                            <AvatarImage src={review.clientAvatar || ''} alt={review.clientName} />
                             <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                              {review.clientName.charAt(0)}
+                              {review.clientName?.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">

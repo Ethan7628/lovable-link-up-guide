@@ -1,6 +1,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/db');
 
 // Import routes
@@ -9,11 +10,32 @@ const bookingRoutes = require('./routes/bookings');
 const chatRoutes = require('./routes/chat');
 const matchRoutes = require('./routes/matches');
 const serviceRoutes = require('./routes/services');
+const paymentRoutes = require('./routes/payments');
+const postRoutes = require('./routes/posts');
 
 const app = express();
 
 // Connect to database
 connectDB();
+
+// Create uploads directory if it doesn't exist
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads');
+const postsDir = path.join(__dirname, 'uploads/posts');
+const profilesDir = path.join(__dirname, 'uploads/profiles');
+
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+if (!fs.existsSync(postsDir)) {
+    fs.mkdirSync(postsDir, { recursive: true });
+}
+if (!fs.existsSync(profilesDir)) {
+    fs.mkdirSync(profilesDir, { recursive: true });
+}
+
+// Serve static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Enable CORS for all routes with enhanced configuration for local development
 app.use(cors({
@@ -90,6 +112,8 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/posts', postRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {
