@@ -59,11 +59,13 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const checkAuthStatus = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
+      console.log('MongoAuth: No token found');
       setLoading(false);
       return;
     }
 
     try {
+      console.log('MongoAuth: Validating existing token');
       const response = await apiClient.getProfile();
       if (response.success && response.data) {
         console.log('MongoAuth: User authenticated', response.data);
@@ -71,10 +73,12 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } else {
         console.log('MongoAuth: Invalid token, clearing storage');
         localStorage.removeItem('token');
+        setUser(null);
       }
     } catch (error) {
       console.error('MongoAuth: Error checking auth status', error);
       localStorage.removeItem('token');
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -109,7 +113,7 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
         
         toast({
-          title: "Welcome!",
+          title: "Welcome to BodyConnect!",
           description: "Your account has been created successfully"
         });
         
@@ -118,7 +122,7 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         console.error('MongoAuth: Sign up failed', response.error);
         toast({
           title: "Sign up failed",
-          description: response.error || 'Registration failed',
+          description: response.error || 'Registration failed. Please check your connection and try again.',
           variant: "destructive"
         });
         return { error: response.error };
@@ -164,7 +168,7 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         console.error('MongoAuth: Sign in failed', response.error);
         toast({
           title: "Sign in failed",
-          description: response.error || 'Invalid credentials',
+          description: response.error || 'Invalid credentials or server connection issue',
           variant: "destructive"
         });
         return { error: response.error };

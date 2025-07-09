@@ -19,6 +19,8 @@ class ApiClient {
 
   async request<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     try {
+      console.log(`Making API request to: ${API_BASE_URL}${endpoint}`);
+      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers: {
@@ -27,18 +29,31 @@ class ApiClient {
         },
       });
 
-      const data = await response.json();
+      console.log(`API response status: ${response.status}`);
 
       if (!response.ok) {
-        throw new Error(data.msg || data.message || 'Request failed');
+        const errorData = await response.json().catch(() => ({ msg: 'Request failed' }));
+        throw new Error(errorData.msg || errorData.message || `HTTP ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log('API response data:', data);
 
       return { success: true, data };
     } catch (error) {
       console.error('API request failed:', error);
+      
+      // Handle network errors specifically
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return { 
+          success: false, 
+          error: 'Unable to connect to server. Please ensure the backend is running on http://localhost:5000' 
+        };
+      }
+      
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
       };
     }
   }
@@ -54,6 +69,7 @@ class ApiClient {
     bio?: string;
     location?: string;
   }) {
+    console.log('Registering user:', { ...userData, password: '[HIDDEN]' });
     return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
@@ -61,6 +77,7 @@ class ApiClient {
   }
 
   async login(email: string, password: string) {
+    console.log('Logging in user:', email);
     return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),

@@ -7,12 +7,30 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
-import { Heart, Sparkles, Users, Star, Shield, Calendar } from 'lucide-react';
+import { Heart, Sparkles, Users, Star, Shield, Calendar, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 
 const AuthPage = () => {
   const { signIn, signUp } = useMongoAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+
+  // Check backend connection
+  React.useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/profile', {
+          method: 'GET',
+        });
+        setConnectionStatus('connected');
+      } catch (error) {
+        setConnectionStatus('disconnected');
+      }
+    };
+    
+    checkConnection();
+  }, []);
 
   // Sign In form state
   const [signInData, setSignInData] = useState({
@@ -34,6 +52,10 @@ const AuthPage = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signInData.email || !signInData.password) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -45,6 +67,10 @@ const AuthPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signUpData.name || !signUpData.email || !signUpData.password || !signUpData.phone) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -94,6 +120,25 @@ const AuthPage = () => {
         transition={{ duration: 0.6 }}
         className="w-full max-w-md relative z-10"
       >
+        {/* Connection Status Alert */}
+        {connectionStatus === 'disconnected' && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <WifiOff className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              Cannot connect to backend server. Please ensure your MongoDB backend is running on http://localhost:5000
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {connectionStatus === 'connected' && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <Wifi className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Connected to BodyConnect backend successfully!
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="space-y-1 text-center pb-8">
             <motion.div
@@ -128,7 +173,9 @@ const AuthPage = () => {
               <TabsContent value="signin" className="space-y-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">
+                      Email Address
+                    </Label>
                     <Input
                       id="signin-email"
                       type="email"
@@ -136,11 +183,13 @@ const AuthPage = () => {
                       value={signInData.email}
                       onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
                       required
-                      className="h-11"
+                      className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">
+                      Password
+                    </Label>
                     <Input
                       id="signin-password"
                       type="password"
@@ -148,13 +197,13 @@ const AuthPage = () => {
                       value={signInData.password}
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
                       required
-                      className="h-11"
+                      className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200"
-                    disabled={isLoading}
+                    className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 text-white font-medium"
+                    disabled={isLoading || connectionStatus === 'disconnected'}
                   >
                     {isLoading ? (
                       <motion.div
@@ -173,31 +222,37 @@ const AuthPage = () => {
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name">Full Name</Label>
+                      <Label htmlFor="signup-name" className="text-sm font-medium text-gray-700">
+                        Full Name
+                      </Label>
                       <Input
                         id="signup-name"
                         placeholder="Your full name"
                         value={signUpData.name}
                         onChange={(e) => setSignUpData({ ...signUpData, name: e.target.value })}
                         required
-                        className="h-11"
+                        className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-phone">Phone</Label>
+                      <Label htmlFor="signup-phone" className="text-sm font-medium text-gray-700">
+                        Phone
+                      </Label>
                       <Input
                         id="signup-phone"
                         placeholder="Phone number"
                         value={signUpData.phone}
                         onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
                         required
-                        className="h-11"
+                        className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email" className="text-sm font-medium text-gray-700">
+                      Email Address
+                    </Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -205,31 +260,36 @@ const AuthPage = () => {
                       value={signUpData.email}
                       onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                       required
-                      className="h-11"
+                      className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password" className="text-sm font-medium text-gray-700">
+                      Password
+                    </Label>
                     <Input
                       id="signup-password"
                       type="password"
-                      placeholder="Create a password"
+                      placeholder="Create a password (min 6 characters)"
                       value={signUpData.password}
                       onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                       required
-                      className="h-11"
+                      minLength={6}
+                      className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-role">I am a</Label>
+                      <Label htmlFor="signup-role" className="text-sm font-medium text-gray-700">
+                        I am a
+                      </Label>
                       <Select 
                         value={signUpData.role} 
                         onValueChange={(value: 'buyer' | 'provider') => setSignUpData({ ...signUpData, role: value })}
                       >
-                        <SelectTrigger className="h-11">
+                        <SelectTrigger className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -239,33 +299,39 @@ const AuthPage = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-age">Age</Label>
+                      <Label htmlFor="signup-age" className="text-sm font-medium text-gray-700">
+                        Age (Optional)
+                      </Label>
                       <Input
                         id="signup-age"
                         type="number"
                         placeholder="Your age"
                         value={signUpData.age}
                         onChange={(e) => setSignUpData({ ...signUpData, age: e.target.value })}
-                        className="h-11"
+                        className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                        min="16"
+                        max="100"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="signup-location">Location</Label>
+                    <Label htmlFor="signup-location" className="text-sm font-medium text-gray-700">
+                      Location (Optional)
+                    </Label>
                     <Input
                       id="signup-location"
                       placeholder="City, Country"
                       value={signUpData.location}
                       onChange={(e) => setSignUpData({ ...signUpData, location: e.target.value })}
-                      className="h-11"
+                      className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
 
                   <Button 
                     type="submit" 
-                    className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200"
-                    disabled={isLoading}
+                    className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 text-white font-medium"
+                    disabled={isLoading || connectionStatus === 'disconnected'}
                   >
                     {isLoading ? (
                       <motion.div
@@ -303,6 +369,28 @@ const AuthPage = () => {
             <p className="text-sm font-medium text-gray-700">Easy Scheduling</p>
           </div>
         </motion.div>
+
+        {/* Backend Status Indicator */}
+        <div className="mt-4 text-center">
+          <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
+            {connectionStatus === 'connected' ? (
+              <>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Backend Connected</span>
+              </>
+            ) : connectionStatus === 'disconnected' ? (
+              <>
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span>Backend Disconnected</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <span>Checking Connection...</span>
+              </>
+            )}
+          </div>
+        </div>
       </motion.div>
     </div>
   );
