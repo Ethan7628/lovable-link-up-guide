@@ -12,6 +12,8 @@ import Dashboard from "./components/dashboard/Dashboard";
 import ServicesPage from "./pages/ServicesPage";
 import ChatPage from "./pages/ChatPage";
 import BookingsPage from "./pages/BookingsPage";
+import SettingsPage from "./pages/SettingsPage";
+import ReviewsPage from "./pages/ReviewsPage";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,14 @@ const AppRoutes = () => {
       <Route 
         path="/bookings" 
         element={user ? <BookingsPage /> : <Navigate to="/auth" replace />} 
+      />
+      <Route 
+        path="/settings" 
+        element={user ? <SettingsPage /> : <Navigate to="/auth" replace />} 
+      />
+      <Route 
+        path="/reviews" 
+        element={user ? <ReviewsPage /> : <Navigate to="/auth" replace />} 
       />
       <Route path="*" element={<NotFound />} />
     </Routes>

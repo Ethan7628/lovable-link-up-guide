@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
 import { Heart, Send, Search, ArrowLeft, MoreVertical, Phone, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -121,13 +122,13 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 overflow-hidden">
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <Link to="/dashboard" className="flex items-center text-purple-600 hover:text-purple-700">
+              <Link to="/dashboard" className="flex items-center text-purple-600 hover:text-purple-700 transition-colors">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 <span>Back</span>
               </Link>
@@ -145,12 +146,12 @@ const ChatPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-8rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
           {/* Chat List */}
-          <div className="lg:col-span-1">
-            <Card className="h-full bg-white/95 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
+          <div className="lg:col-span-1 h-full">
+            <Card className="h-full bg-white/95 backdrop-blur-sm border-0 shadow-lg flex flex-col">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle className="text-xl font-bold text-gray-900">Messages</CardTitle>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -162,60 +163,62 @@ const ChatPage = () => {
                   />
                 </div>
               </CardHeader>
-              <CardContent className="p-0 flex-1 overflow-y-auto">
-                <div className="space-y-1">
-                  {filteredChats.map((chat) => (
-                    <motion.div
-                      key={chat.id}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`p-4 cursor-pointer transition-colors ${
-                        selectedChat?.id === chat.id
-                          ? 'bg-purple-50 border-r-4 border-purple-500'
-                          : 'hover:bg-gray-50'
-                      }`}
-                      onClick={() => setSelectedChat(chat)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={chat.avatar} alt={chat.name} />
-                            <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                              {chat.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {chat.online && (
-                            <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="font-medium text-gray-900 truncate">{chat.name}</p>
-                            <div className="flex items-center space-x-2">
-                              {chat.unread > 0 && (
-                                <Badge className="bg-purple-600 text-white text-xs">
-                                  {chat.unread}
-                                </Badge>
-                              )}
-                              <span className="text-xs text-gray-500">{chat.timestamp}</span>
-                            </div>
+              <CardContent className="p-0 flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="space-y-1 p-4">
+                    {filteredChats.map((chat) => (
+                      <motion.div
+                        key={chat.id}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`p-4 cursor-pointer transition-colors rounded-lg ${
+                          selectedChat?.id === chat.id
+                            ? 'bg-purple-50 border-r-4 border-purple-500'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setSelectedChat(chat)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="relative flex-shrink-0">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={chat.avatar} alt={chat.name} />
+                              <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                                {chat.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            {chat.online && (
+                              <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
+                            )}
                           </div>
-                          <p className="text-sm text-gray-600 truncate">{chat.lastMessage}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-gray-900 truncate">{chat.name}</p>
+                              <div className="flex items-center space-x-2 flex-shrink-0">
+                                {chat.unread > 0 && (
+                                  <Badge className="bg-purple-600 text-white text-xs">
+                                    {chat.unread}
+                                  </Badge>
+                                )}
+                                <span className="text-xs text-gray-500">{chat.timestamp}</span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-600 truncate">{chat.lastMessage}</p>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           </div>
 
           {/* Chat Window */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 h-full">
             {selectedChat ? (
               <Card className="h-full bg-white/95 backdrop-blur-sm border-0 shadow-lg flex flex-col">
                 {/* Chat Header */}
-                <CardHeader className="border-b border-gray-200">
+                <CardHeader className="border-b border-gray-200 flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="relative">
@@ -251,34 +254,38 @@ const ChatPage = () => {
                 </CardHeader>
 
                 {/* Messages */}
-                <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.map((msg) => (
-                    <motion.div
-                      key={msg.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        msg.isOwn
-                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                          : 'bg-gray-100 text-gray-900'
-                      }`}>
-                        <p className="text-sm">{msg.content}</p>
-                        <p className={`text-xs mt-1 ${
-                          msg.isOwn ? 'text-purple-100' : 'text-gray-500'
-                        }`}>
-                          {msg.timestamp}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))}
-                  <div ref={messagesEndRef} />
+                <CardContent className="flex-1 overflow-hidden p-0">
+                  <ScrollArea className="h-full">
+                    <div className="p-4 space-y-4">
+                      {messages.map((msg) => (
+                        <motion.div
+                          key={msg.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg break-words ${
+                            msg.isOwn
+                              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                              : 'bg-gray-100 text-gray-900'
+                          }`}>
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <p className={`text-xs mt-1 ${
+                              msg.isOwn ? 'text-purple-100' : 'text-gray-500'
+                            }`}>
+                              {msg.timestamp}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </ScrollArea>
                 </CardContent>
 
                 {/* Message Input */}
-                <div className="border-t border-gray-200 p-4">
+                <div className="border-t border-gray-200 p-4 flex-shrink-0">
                   <div className="flex items-center space-x-2">
                     <Input
                       placeholder="Type a message..."
