@@ -66,14 +66,33 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    overflow-x: hidden;
+  }
+  
   body {
     @apply bg-background text-foreground font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+  
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 }
 
-/* Responsive Design Utilities */
+/* Fix mobile overflow issues */
 @layer utilities {
+  .prevent-overflow {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -191,6 +210,28 @@
   .tap-target {
     @apply min-h-[48px] min-w-[48px] flex items-center justify-center;
   }
+  
+  /* Container max width utilities */
+  .container-safe {
+    @apply max-w-full mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Prevent text overflow */
+  .text-safe {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  /* Mobile-safe flexbox */
+  .flex-safe {
+    @apply flex flex-wrap;
+  }
+  
+  /* Image safety */
+  .img-safe {
+    @apply max-w-full h-auto;
+  }
 }
 
 /* Custom animations */
@@ -232,6 +273,7 @@
   /* Improve mobile scrolling */
   body {
     -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
   }
 
   /* Better mobile form inputs */
@@ -256,6 +298,18 @@
     border-top: 1px solid #e5e7eb;
     padding: 0.5rem;
     padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  * {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+  
+  .container, .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl, .max-w-xl {
+    max-width: calc(100vw - 2rem);
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -318,5 +372,63 @@
   
   .auto-dark-card {
     @apply bg-gray-800 border-gray-700;
+  }
+}
+
+/* Chat and messaging specific styles */
+.chat-container {
+  @apply overflow-x-hidden;
+}
+
+.message-bubble {
+  @apply break-words max-w-full;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Post and feed specific styles */
+.post-container {
+  @apply overflow-hidden;
+}
+
+.post-image {
+  @apply w-full h-auto object-cover;
+}
+
+/* Ensure all content respects container boundaries */
+.content-safe {
+  @apply w-full max-w-full overflow-hidden;
+}
+
+/* Additional mobile breakpoint */
+@media (max-width: 480px) {
+  .xs\:hidden {
+    display: none;
+  }
+  
+  .xs\:block {
+    display: block;
+  }
+  
+  .xs\:flex {
+    display: flex;
+  }
+  
+  .xs\:text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .xs\:text-xs {
+    font-size: 0.75rem;
+  }
+  
+  .xs\:px-2 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .xs\:py-1 {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
   }
 }
