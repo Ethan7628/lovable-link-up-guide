@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,22 +24,29 @@ import {
   Mail, 
   Camera,
   Save,
-  Trash2
+  Trash2,
+  Upload,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SettingsPage = () => {
-  const { user, signOut } = useMongoAuth();
+  const { user, updateProfile, uploadProfilePicture, signOut } = useMongoAuth();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: '',
-    location: '',
-    bio: '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    bio: user?.bio || '',
     role: user?.role || 'buyer'
   });
+  
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -55,26 +61,80 @@ const SettingsPage = () => {
     allowDirectMessages: true
   });
 
+  const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Only JPEG, PNG, and GIF files are allowed",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "Image must be smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedImage) return;
+    
+    setUploading(true);
+    try {
+      const result = await uploadProfilePicture(selectedImage);
+      if (!result.error) {
+        setSelectedImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const clearImageSelection = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleProfileUpdate = async () => {
     try {
-      // API call to update profile would go here
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
-      });
+      await updateProfile(profileData);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Profile update error:', error);
     }
   };
 
   const handleDeleteAccount = async () => {
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       try {
-        // API call to delete account would go here
         toast({
           title: "Account Deleted",
           description: "Your account has been deleted successfully.",
@@ -149,18 +209,65 @@ const SettingsPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Profile Picture */}
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-20 w-20">
-                      <AvatarImage src="" alt={profileData.name} />
-                      <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-2xl">
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-32 w-32 border-4 border-purple-200">
+                      <AvatarImage 
+                        src={imagePreview || user?.profilePicture || ""} 
+                        alt={profileData.name} 
+                      />
+                      <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-4xl">
                         {profileData.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="space-y-2">
-                      <Button variant="outline" className="flex items-center gap-2">
-                        <Camera className="h-4 w-4" />
-                        Change Photo
-                      </Button>
+                    
+                    <div className="space-y-2 text-center">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelection}
+                        className="hidden"
+                      />
+                      
+                      {selectedImage ? (
+                        <div className="flex items-center space-x-2">
+                          <Button 
+                            onClick={handleImageUpload}
+                            disabled={uploading}
+                            className="bg-gradient-to-r from-purple-600 to-pink-600"
+                          >
+                            {uploading ? (
+                              <>
+                                <Upload className="h-4 w-4 mr-2 animate-spin" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4 mr-2" />
+                                Upload Photo
+                              </>
+                            )}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={clearImageSelection}
+                            disabled={uploading}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center gap-2"
+                        >
+                          <Camera className="h-4 w-4" />
+                          Change Photo
+                        </Button>
+                      )}
+                      
                       <Badge variant="secondary" className="text-xs">
                         {profileData.role === 'buyer' ? 'Client' : 'Service Provider'}
                       </Badge>

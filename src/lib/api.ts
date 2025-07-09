@@ -132,6 +132,10 @@ class ApiClient {
     });
   }
 
+  async uploadProfilePicture(formData: FormData) {
+    return this.uploadRequest('/auth/upload-profile-picture', formData);
+  }
+
   // Posts endpoints
   async getPosts(params?: { page?: number; limit?: number; category?: string; location?: string }) {
     const queryString = params ? '?' + new URLSearchParams(

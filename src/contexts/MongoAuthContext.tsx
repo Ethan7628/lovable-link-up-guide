@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api';
 
 interface User {
@@ -13,6 +13,7 @@ interface User {
   bio?: string;
   location?: string;
   photos?: string[];
+  profilePicture?: string;
   isVerified?: boolean;
   verificationStatus?: string;
   rating?: number;
@@ -42,6 +43,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (profileData: any) => Promise<{ error: any }>;
+  uploadProfilePicture: (file: File) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -225,6 +227,39 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const uploadProfilePicture = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+      
+      const response = await apiClient.uploadProfilePicture(formData);
+      
+      if (response.success && response.data) {
+        setUser(prev => prev ? { ...prev, profilePicture: response.data.profilePictureUrl } : null);
+        toast({
+          title: "Profile picture updated",
+          description: "Your profile picture has been updated successfully"
+        });
+        return { error: null };
+      } else {
+        toast({
+          title: "Upload failed",
+          description: response.error || 'Failed to upload profile picture',
+          variant: "destructive"
+        });
+        return { error: response.error };
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      toast({
+        title: "Upload failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      return { error };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -232,7 +267,8 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       signUp,
       signIn,
       signOut,
-      updateProfile
+      updateProfile,
+      uploadProfilePicture
     }}>
       {children}
     </AuthContext.Provider>

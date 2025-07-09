@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema({
     bio: { type: String },
     location: { type: String },
     photos: [{ type: String }],
+    profilePicture: { type: String }, // Added profile picture field
     
     // Provider-specific fields
     services: [{

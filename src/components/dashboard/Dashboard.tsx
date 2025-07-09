@@ -7,7 +7,6 @@ import { useMongoAuth } from '@/contexts/MongoAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import SocialFeed from '@/components/feed/SocialFeed';
 import CreatePost from '@/components/posts/CreatePost';
 import { 
   Heart, 
@@ -22,11 +21,12 @@ import {
   BookOpen,
   Camera,
   Plus,
-  Bell
+  Bell,
+  Rss
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, logout } = useMongoAuth();
+  const { user, signOut } = useMongoAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -42,7 +42,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
@@ -72,15 +72,42 @@ const Dashboard = () => {
       bgColor: 'bg-green-50'
     },
     { 
-      title: 'Earnings', 
-      value: '$280', 
+      title: user?.role === 'provider' ? 'Earnings' : 'Spent', 
+      value: user?.role === 'provider' ? '$280' : '$120', 
       icon: <DollarSign className="h-5 w-5" />,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     }
   ];
 
-  const quickActions = [
+  const clientActions = [
+    { 
+      title: 'Browse Feed', 
+      icon: <Rss className="h-5 w-5" />, 
+      action: () => navigate('/feed'), 
+      color: 'bg-purple-600 hover:bg-purple-700' 
+    },
+    { 
+      title: 'View Services', 
+      icon: <BookOpen className="h-5 w-5" />, 
+      action: () => navigate('/services'), 
+      color: 'bg-blue-600 hover:bg-blue-700' 
+    },
+    { 
+      title: 'My Bookings', 
+      icon: <Calendar className="h-5 w-5" />, 
+      action: () => navigate('/bookings'), 
+      color: 'bg-green-600 hover:bg-green-700' 
+    },
+    { 
+      title: 'Messages', 
+      icon: <MessageSquare className="h-5 w-5" />, 
+      action: () => navigate('/chat'), 
+      color: 'bg-orange-600 hover:bg-orange-700' 
+    }
+  ];
+
+  const providerActions = [
     { 
       title: 'Create Post', 
       icon: <Camera className="h-5 w-5" />, 
@@ -106,6 +133,8 @@ const Dashboard = () => {
       color: 'bg-gray-600 hover:bg-gray-700' 
     }
   ];
+
+  const quickActions = user?.role === 'provider' ? providerActions : clientActions;
 
   if (!user) {
     return (
@@ -137,9 +166,17 @@ const Dashboard = () => {
                   <p className="font-semibold text-gray-900">{user.name}</p>
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
+                  {user.profilePicture ? (
+                    <img 
+                      src={user.profilePicture} 
+                      alt={user.name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-semibold text-sm">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -147,9 +184,17 @@ const Dashboard = () => {
             {/* Mobile User Avatar */}
             {isMobile && (
               <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-xs">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
+                {user.profilePicture ? (
+                  <img 
+                    src={user.profilePicture} 
+                    alt={user.name}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-xs">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
             )}
 
@@ -220,15 +265,10 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Social Feed */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Recent Posts</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <SocialFeed />
-              </CardContent>
-            </Card>
+            {/* Create Post Section for Providers Only */}
+            {user.role === 'provider' && (
+              <CreatePost />
+            )}
           </div>
 
           {/* Sidebar */}
@@ -241,9 +281,17 @@ const Dashboard = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
+                    {user.profilePicture ? (
+                      <img 
+                        src={user.profilePicture} 
+                        alt={user.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-semibold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{user.name}</h3>
@@ -264,24 +312,23 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Create Post Card (for providers) */}
-            {user.role === 'provider' && (
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold text-gray-900">Share Update</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CreatePost />
-                </CardContent>
-              </Card>
-            )}
-
             {/* Navigation Links */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold text-gray-900">Navigate</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                {user.role === 'buyer' && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate('/feed')}
+                    className="w-full justify-start"
+                  >
+                    <Rss className="h-4 w-4 mr-2" />
+                    Social Feed
+                  </Button>
+                )}
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -333,7 +380,7 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center space-x-3 text-sm">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-600">Message from client</span>
+                  <span className="text-gray-600">Message from {user.role === 'provider' ? 'client' : 'provider'}</span>
                 </div>
                 <div className="flex items-center space-x-3 text-sm">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
