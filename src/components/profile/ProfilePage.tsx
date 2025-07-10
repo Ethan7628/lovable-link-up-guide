@@ -75,12 +75,40 @@ const ProfilePage = () => {
 
   const fetchProfileData = async () => {
     try {
-      if (isOwnProfile) {
-        setProfileData(user as ProfileData);
+      if (isOwnProfile && user) {
+        // Convert user data to ProfileData format
+        const convertedProfile: ProfileData = {
+          _id: user.id || '',
+          name: user.name || '',
+          email: user.email || '',
+          bio: user.bio || '',
+          photos: user.photos || [],
+          location: user.location || '',
+          role: user.role || 'buyer',
+          isVerified: user.isVerified || false,
+          rating: user.rating || 0,
+          totalReviews: user.totalReviews || 0,
+          services: user.services || []
+        };
+        setProfileData(convertedProfile);
       } else {
-        // Fetch other user's profile
-        // This would need to be implemented in the API
-        setProfileData(user as ProfileData);
+        // Fetch other user's profile - would need API implementation
+        if (user) {
+          const convertedProfile: ProfileData = {
+            _id: user.id || '',
+            name: user.name || '',
+            email: user.email || '',
+            bio: user.bio || '',
+            photos: user.photos || [],
+            location: user.location || '',
+            role: user.role || 'buyer',
+            isVerified: user.isVerified || false,
+            rating: user.rating || 0,
+            totalReviews: user.totalReviews || 0,
+            services: user.services || []
+          };
+          setProfileData(convertedProfile);
+        }
       }
       
       // Mock follower data

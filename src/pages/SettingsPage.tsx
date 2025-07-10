@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,7 +41,8 @@ import {
   Download,
   HelpCircle,
   LogOut,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -340,7 +342,7 @@ const SettingsPage = () => {
                     </div>
                     
                     <Badge variant="secondary" className="text-xs">
-                      {profileData.role === 'buyer' ? 'Client' : 'Service Provider'}
+                      {profileData.role === 'buyer' ? 'Client' : 'Service Provider'}  
                     </Badge>
                   </div>
 
@@ -448,7 +450,7 @@ const SettingsPage = () => {
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
                             <Switch
-                              checked={notifications[key as keyof typeof notifications]}
+                              checked={Boolean(notifications[key as keyof typeof notifications])}
                               onCheckedChange={(checked) => setNotifications({...notifications, [key]: checked})}
                             />
                           </div>
@@ -473,7 +475,7 @@ const SettingsPage = () => {
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
                             <Switch
-                              checked={notifications[key as keyof typeof notifications]}
+                              checked={Boolean(notifications[key as keyof typeof notifications])}
                               onCheckedChange={(checked) => setNotifications({...notifications, [key]: checked})}
                             />
                           </div>
@@ -566,7 +568,7 @@ const SettingsPage = () => {
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
                             <Switch
-                              checked={privacy[key as keyof typeof privacy]}
+                              checked={Boolean(privacy[key as keyof typeof privacy])}
                               onCheckedChange={(checked) => setPrivacy({...privacy, [key]: checked})}
                             />
                           </div>
@@ -590,7 +592,7 @@ const SettingsPage = () => {
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
                             <Switch
-                              checked={privacy[key as keyof typeof privacy]}
+                              checked={Boolean(privacy[key as keyof typeof privacy])}
                               onCheckedChange={(checked) => setPrivacy({...privacy, [key]: checked})}
                             />
                           </div>
@@ -654,7 +656,7 @@ const SettingsPage = () => {
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
                             <Switch
-                              checked={security[key as keyof typeof security]}
+                              checked={Boolean(security[key as keyof typeof security])}
                               onCheckedChange={(checked) => setSecurity({...security, [key]: checked})}
                             />
                           </div>

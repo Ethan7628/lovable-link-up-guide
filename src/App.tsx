@@ -15,6 +15,7 @@ import BookingsPage from "./pages/BookingsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import FeedPage from "./pages/FeedPage";
+import ProfilePage from "./components/profile/ProfilePage";
 
 const queryClient = new QueryClient();
 
