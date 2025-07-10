@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -99,7 +98,7 @@ const Dashboard = () => {
     try {
       const response = await apiClient.getMyPosts();
       if (response.success) {
-        setPosts(response.data || []);
+        setPosts((response.data as Post[]) || []);
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -113,7 +112,7 @@ const Dashboard = () => {
     try {
       const response = await apiClient.getProviderBookings();
       if (response.success) {
-        setBookings(response.data || []);
+        setBookings((response.data as Booking[]) || []);
       }
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -127,7 +126,7 @@ const Dashboard = () => {
     try {
       const response = await apiClient.getBookings();
       if (response.success) {
-        setBookings(response.data || []);
+        setBookings((response.data as Booking[]) || []);
       }
     } catch (error) {
       console.error('Error fetching bookings:', error);
