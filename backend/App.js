@@ -36,14 +36,15 @@ const allowedOrigins = [
     'http://127.0.0.1:5173',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://192.168.100.163:5173', // ✅ Your machine's IP for LAN access
     process.env.CORS_ORIGIN,
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin) return callback(null, true); // Allow requests like curl/Postman
+        if (!origin && process.env.NODE_ENV === 'development') {
+            return callback(null, true);
+        }
 
         if (allowedOrigins.includes(origin)) {
             callback(null, true);
@@ -70,16 +71,16 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // 🧾 Request logger for debugging
-app.use((req, res, next) => {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${req.method} ${req.path}`);
-    if (req.body && Object.keys(req.body).length > 0) {
-        const clone = { ...req.body };
-        if (clone.password) clone.password = '[HIDDEN]';
-        console.log('📦 Body:', clone);
-    }
-    next();
-});
+// app.use((req, res, next) => {
+//     const timestamp = new Date().toISOString();
+//     console.log(`[${timestamp}] ${req.method} ${req.path}`);
+//     if (req.body && Object.keys(req.body).length > 0) {
+//         const clone = { ...req.body };
+//         if (clone.password) clone.password = '[HIDDEN]';
+//         console.log('📦 Body:', clone);
+//     }
+//     next();
+// });
 
 // ✅ Health check
 app.get('/api/health', (req, res) => {
@@ -89,6 +90,16 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development'
     });
+});
+// Debug middleware to check incoming requests
+app.use((req, res, next) => {
+    console.log('Incoming request:', {
+        method: req.method,
+        url: req.originalUrl,
+        headers: req.headers,
+        ip: req.ip
+    });
+    next();
 });
 
 // ✅ Mount API routes

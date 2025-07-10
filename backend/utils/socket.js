@@ -4,8 +4,9 @@ const { saveMessage } = require('../controllers/chatController');
 const setupSocket = (server) => {
     const io = socketio(server, {
         cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
+            origin: process.env.NODE_ENV === 'development' ? "*" : process.env.FRONTEND_URL,
+            methods: ["GET", "POST"],
+            credentials: true
         }
     });
 
