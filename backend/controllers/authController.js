@@ -1,6 +1,34 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for profile picture uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/profiles/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: function (req, file, cb) {
+        const allowedTypes = /jpeg|jpg|png|gif/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'));
+        }
+    }
+});
 
 // Register user
 const register = async (req, res) => {
@@ -174,8 +202,9 @@ const getProfile = async (req, res) => {
             name: user.name,
             email: user.email,
             phone: user.phone,
-            about: user.bio || '',
+            bio: user.bio || '',
             photos: user.photos || [],
+            profilePicture: user.profilePicture,
             age: user.age,
             location: user.location,
             role: user.role,
@@ -223,8 +252,9 @@ const updateProfile = async (req, res) => {
             name: user.name,
             email: user.email,
             phone: user.phone,
-            about: user.bio || '',
+            bio: user.bio || '',
             photos: user.photos || [],
+            profilePicture: user.profilePicture,
             age: user.age,
             location: user.location,
             role: user.role,
@@ -243,4 +273,41 @@ const updateProfile = async (req, res) => {
     }
 };
 
-module.exports = { register, login, getProfile, updateProfile };
+// Upload profile picture
+const uploadProfilePicture = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ msg: 'No file uploaded' });
+        }
+
+        const profilePictureUrl = `/uploads/profiles/${req.file.filename}`;
+        
+        // Update user's profile picture in database
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { profilePicture: profilePictureUrl },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        res.json({ 
+            message: 'Profile picture uploaded successfully',
+            profilePictureUrl: profilePictureUrl
+        });
+    } catch (err) {
+        console.error('Profile picture upload error:', err);
+        res.status(500).json({ msg: 'Server error uploading profile picture' });
+    }
+};
+
+module.exports = { 
+    register, 
+    login, 
+    getProfile, 
+    updateProfile, 
+    uploadProfilePicture,
+    upload 
+};

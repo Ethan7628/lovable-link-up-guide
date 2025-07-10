@@ -54,7 +54,7 @@ const getUserBookings = async (req, res) => {
     try {
         const bookings = await Booking.find({ buyerId: req.user.id })
             .populate('serviceId', 'title description category')
-            .populate('providerId', 'name photos phone')
+            .populate('providerId', 'name photos phone profilePicture')
             .sort({ createdAt: -1 });
 
         res.json(bookings);
@@ -69,7 +69,7 @@ const getProviderBookings = async (req, res) => {
     try {
         const bookings = await Booking.find({ providerId: req.user.id })
             .populate('serviceId', 'title description category')
-            .populate('buyerId', 'name photos phone')
+            .populate('buyerId', 'name photos phone profilePicture')
             .sort({ createdAt: -1 });
 
         res.json(bookings);
@@ -79,7 +79,7 @@ const getProviderBookings = async (req, res) => {
     }
 };
 
-// Update booking status
+// Update booking status (providers can accept/reject)
 const updateBookingStatus = async (req, res) => {
     try {
         const { status } = req.body;
@@ -94,12 +94,18 @@ const updateBookingStatus = async (req, res) => {
             return res.status(403).json({ msg: 'Access denied' });
         }
 
+        // Validate status
+        const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ msg: 'Invalid status' });
+        }
+
         booking.status = status;
         await booking.save();
 
         const populatedBooking = await Booking.findById(booking._id)
             .populate('serviceId', 'title description category')
-            .populate('buyerId', 'name photos phone');
+            .populate('buyerId', 'name photos phone profilePicture');
 
         res.json(populatedBooking);
     } catch (err) {
@@ -129,8 +135,8 @@ const cancelBooking = async (req, res) => {
 
         const populatedBooking = await Booking.findById(booking._id)
             .populate('serviceId', 'title description category')
-            .populate('providerId', 'name photos phone')
-            .populate('buyerId', 'name photos phone');
+            .populate('providerId', 'name photos phone profilePicture')
+            .populate('buyerId', 'name photos phone profilePicture');
 
         res.json(populatedBooking);
     } catch (err) {
