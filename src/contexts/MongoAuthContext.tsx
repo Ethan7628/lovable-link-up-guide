@@ -27,6 +27,10 @@ interface AuthResponse {
   user?: User;
 }
 
+interface ProfilePictureResponse {
+  profilePictureUrl: string;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -235,7 +239,8 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const response = await apiClient.uploadProfilePicture(formData);
       
       if (response.success && response.data) {
-        setUser(prev => prev ? { ...prev, profilePicture: response.data.profilePictureUrl } : null);
+        const uploadResponse = response.data as ProfilePictureResponse;
+        setUser(prev => prev ? { ...prev, profilePicture: uploadResponse.profilePictureUrl } : null);
         toast({
           title: "Profile picture updated",
           description: "Your profile picture has been updated successfully"
