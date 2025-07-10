@@ -29,6 +29,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import logo from '@/assets/logo.png';
 
 interface Post {
   _id: string;
@@ -204,37 +205,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
-      {/* Header */}
-      <div className="bg-white/95 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Heart className="h-8 w-8 text-purple-600" />
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  BodyConnect
-                </h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/feed" className="text-purple-600 hover:text-purple-700 transition-colors">
-                Social Feed
-              </Link>
-              <Link to="/settings" className="flex items-center text-purple-600 hover:text-purple-700 transition-colors">
-                <Settings className="h-5 w-5 mr-1" />
-                Settings
-              </Link>
-              <button 
-                onClick={signOut}
-                className="text-red-600 hover:text-red-700 transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 pt-16">{/* Offset for fixed navbar */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
@@ -246,12 +217,17 @@ const Dashboard = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16 border-4 border-purple-200">
-                  <AvatarImage src={user?.profilePicture || ""} alt={user?.name} />
-                  <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xl">
-                    {user?.name?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                <Link to={`/profile/${user?.id}`} className="cursor-pointer">
+                  <Avatar className="h-16 w-16 border-4 border-purple-200 hover:border-purple-300 transition-colors">
+                    <AvatarImage 
+                      src={user?.profilePicture ? `http://localhost:5000${user.profilePicture}` : (user?.photos?.[0] ? `http://localhost:5000${user.photos[0]}` : "")} 
+                      alt={user?.name} 
+                    />
+                    <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xl">
+                      {user?.name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
                 <div>
                   <h2 className="text-3xl font-bold text-gray-900">
                     Welcome back, {user?.name}!

@@ -1,0 +1,71 @@
+{
+  "name": "BodyConnect - Wellness & Fitness",
+  "short_name": "BodyConnect",
+  "description": "Connect with wellness and fitness professionals in your area",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f4ff",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["health", "fitness", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/src/assets/logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/src/assets/logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/src/assets/logo.png",
+      "type": "image/png",
+      "sizes": "144x144",
+      "purpose": "any"
+    },
+    {
+      "src": "/src/assets/logo.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any"
+    },
+    {
+      "src": "/src/assets/logo.png",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "any"
+    },
+    {
+      "src": "/src/assets/logo.png",
+      "type": "image/png",
+      "sizes": "48x48",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Social Feed",
+      "short_name": "Feed",
+      "description": "Browse wellness and fitness posts",
+      "url": "/feed",
+      "icons": [{ "src": "/src/assets/logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Book Service",
+      "short_name": "Book",
+      "description": "Find and book wellness services",
+      "url": "/services",
+      "icons": [{ "src": "/src/assets/logo.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "splash_pages": null
+}

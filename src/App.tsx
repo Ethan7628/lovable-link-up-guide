@@ -16,6 +16,8 @@ import SettingsPage from "./pages/SettingsPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./components/profile/ProfilePage";
+import MobileNav from "./components/layout/MobileNav";
+import Navbar from "./components/layout/Navbar";
 
 const queryClient = new QueryClient();
 
@@ -34,46 +36,52 @@ const AppRoutes = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route 
-        path="/auth" 
-        element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} 
-      />
-      <Route 
-        path="/dashboard" 
-        element={user ? <Dashboard /> : <Navigate to="/auth" replace />} 
-      />
-      <Route 
-        path="/feed" 
-        element={user ? <FeedPage /> : <Navigate to="/auth" replace />} 
-      />
-      <Route 
-        path="/profile/:userId?" 
-        element={user ? <ProfilePage /> : <Navigate to="/auth" replace />} 
-      />
-      <Route 
-        path="/services" 
-        element={user ? <ServicesPage /> : <Navigate to="/auth" replace />} 
-      />
-      <Route 
-        path="/chat" 
-        element={user ? <ChatPage /> : <Navigate to="/auth" replace />} 
-      />
-      <Route 
-        path="/bookings" 
-        element={user ? <BookingsPage /> : <Navigate to="/auth" replace />} 
-      />
-      <Route 
-        path="/settings" 
-        element={user ? <SettingsPage /> : <Navigate to="/auth" replace />} 
-      />
-      <Route 
-        path="/reviews" 
-        element={user ? <ReviewsPage /> : <Navigate to="/auth" replace />} 
-      />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      {user && <Navbar />}
+      <div className={user ? "pb-16 md:pb-0" : ""}>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route 
+            path="/auth" 
+            element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} 
+          />
+          <Route 
+            path="/dashboard" 
+            element={user ? <Dashboard /> : <Navigate to="/auth" replace />} 
+          />
+          <Route 
+            path="/feed" 
+            element={user ? <FeedPage /> : <Navigate to="/auth" replace />} 
+          />
+          <Route 
+            path="/profile/:userId?" 
+            element={user ? <ProfilePage /> : <Navigate to="/auth" replace />} 
+          />
+          <Route 
+            path="/services" 
+            element={user ? <ServicesPage /> : <Navigate to="/auth" replace />} 
+          />
+          <Route 
+            path="/chat" 
+            element={user ? <ChatPage /> : <Navigate to="/auth" replace />} 
+          />
+          <Route 
+            path="/bookings" 
+            element={user ? <BookingsPage /> : <Navigate to="/auth" replace />} 
+          />
+          <Route 
+            path="/settings" 
+            element={user ? <SettingsPage /> : <Navigate to="/auth" replace />} 
+          />
+          <Route 
+            path="/reviews" 
+            element={user ? <ReviewsPage /> : <Navigate to="/auth" replace />} 
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+      {user && <MobileNav />}
+    </>
   );
 };
 

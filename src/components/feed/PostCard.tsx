@@ -120,9 +120,9 @@ const PostCard: React.FC<PostCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center space-x-3">
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-8 w-8 cursor-pointer" onClick={() => window.location.href = `/profile/${post.providerId._id}`}>
             <AvatarImage 
-              src={post.providerId.photos?.[0]} 
+              src={post.providerId.photos?.[0] ? `http://localhost:5000${post.providerId.photos[0]}` : ""}
               alt={post.providerId.name} 
             />
             <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm">
@@ -154,12 +154,12 @@ const PostCard: React.FC<PostCardProps> = ({
               size="sm"
               variant="outline"
               onClick={() => onFollow(post.providerId._id)}
-              className="text-xs px-3 py-1"
+              className="text-xs px-3 py-1 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-colors focus-ring"
             >
               Follow
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100 focus-ring">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
@@ -202,39 +202,39 @@ const PostCard: React.FC<PostCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => onLike(post._id)}
-              className="p-0 h-auto"
+              className="p-1 h-auto hover:bg-red-50 focus-ring transition-colors"
             >
               <Heart 
-                className={`h-6 w-6 ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-900'}`}
+                className={`h-6 w-6 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-gray-900 hover:text-red-500'}`}
               />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowComments(!showComments)}
-              className="p-0 h-auto"
+              className="p-1 h-auto hover:bg-blue-50 focus-ring transition-colors"
             >
-              <MessageCircle className="h-6 w-6 text-gray-900" />
+              <MessageCircle className="h-6 w-6 text-gray-900 hover:text-blue-500 transition-colors" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onShare(post)}
-              className="p-0 h-auto"
+              className="p-1 h-auto hover:bg-green-50 focus-ring transition-colors"
             >
-              <Share2 className="h-6 w-6 text-gray-900" />
+              <Share2 className="h-6 w-6 text-gray-900 hover:text-green-500 transition-colors" />
             </Button>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsBookmarked(!isBookmarked)}
-            className="p-0 h-auto"
+            className="p-1 h-auto hover:bg-yellow-50 focus-ring transition-colors"
           >
             {isBookmarked ? (
-              <BookmarkCheck className="h-6 w-6 text-gray-900" />
+              <BookmarkCheck className="h-6 w-6 text-yellow-500" />
             ) : (
-              <Bookmark className="h-6 w-6 text-gray-900" />
+              <Bookmark className="h-6 w-6 text-gray-900 hover:text-yellow-500 transition-colors" />
             )}
           </Button>
         </div>
@@ -294,7 +294,7 @@ const PostCard: React.FC<PostCardProps> = ({
         {/* Book service button */}
         <Button
           onClick={() => onBook(post)}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white mb-3"
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white mb-3 transition-all duration-200 transform hover:scale-105 focus-ring"
         >
           <Calendar className="h-4 w-4 mr-2" />
           Book Service
@@ -315,9 +315,9 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
             {post.comments.map((comment) => (
               <div key={comment._id} className="flex items-start space-x-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={comment.userId.photos?.[0]} />
-                  <AvatarFallback className="text-xs">
+                <Avatar className="h-6 w-6 cursor-pointer" onClick={() => window.location.href = `/profile/${comment.userId._id}`}>
+                  <AvatarImage src={comment.userId.photos?.[0] ? `http://localhost:5000${comment.userId.photos[0]}` : ""} />
+                  <AvatarFallback className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white">
                     {comment.userId.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -336,7 +336,7 @@ const PostCard: React.FC<PostCardProps> = ({
         {/* Add comment */}
         <div className="flex items-center space-x-2 border-t pt-3">
           <Avatar className="h-6 w-6">
-            <AvatarFallback className="text-xs bg-purple-500 text-white">
+            <AvatarFallback className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white">
               {currentUserId?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
@@ -344,7 +344,7 @@ const PostCard: React.FC<PostCardProps> = ({
             placeholder="Add a comment..."
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            className="flex-1 border-none bg-transparent text-sm"
+            className="flex-1 border-none bg-transparent text-sm focus:ring-0 focus:outline-none"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
                 handleComment();
@@ -356,9 +356,9 @@ const PostCard: React.FC<PostCardProps> = ({
             onClick={handleComment}
             disabled={!commentText.trim()}
             variant="ghost"
-            className="p-1"
+            className="p-1 hover:bg-purple-50 focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-4 w-4 text-purple-600" />
           </Button>
         </div>
       </div>
