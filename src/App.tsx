@@ -48,6 +48,10 @@ const AppRoutes = () => {
         element={user ? <FeedPage /> : <Navigate to="/auth" replace />} 
       />
       <Route 
+        path="/profile/:userId?" 
+        element={user ? <ProfilePage /> : <Navigate to="/auth" replace />} 
+      />
+      <Route 
         path="/services" 
         element={user ? <ServicesPage /> : <Navigate to="/auth" replace />} 
       />
