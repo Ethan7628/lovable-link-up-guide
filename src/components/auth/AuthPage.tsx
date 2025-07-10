@@ -20,7 +20,8 @@ const AuthPage = () => {
   React.useEffect(() => {
     const checkConnection = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/profile', {
+        const response = await fetch('http://192.168.100.163:5000/api/auth/profile', {
+
           method: 'GET',
         });
         setConnectionStatus('connected');
@@ -28,7 +29,7 @@ const AuthPage = () => {
         setConnectionStatus('disconnected');
       }
     };
-    
+
     checkConnection();
   }, []);
 
@@ -55,9 +56,9 @@ const AuthPage = () => {
     if (!signInData.email || !signInData.password) {
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await signIn(signInData.email, signInData.password);
     } finally {
@@ -70,9 +71,9 @@ const AuthPage = () => {
     if (!signUpData.name || !signUpData.email || !signUpData.password || !signUpData.phone) {
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const userData = {
         ...signUpData,
@@ -200,8 +201,8 @@ const AuthPage = () => {
                       className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 text-white font-medium"
                     disabled={isLoading || connectionStatus === 'disconnected'}
                   >
@@ -248,7 +249,7 @@ const AuthPage = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-email" className="text-sm font-medium text-gray-700">
                       Email Address
@@ -263,7 +264,7 @@ const AuthPage = () => {
                       className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-password" className="text-sm font-medium text-gray-700">
                       Password
@@ -285,8 +286,8 @@ const AuthPage = () => {
                       <Label htmlFor="signup-role" className="text-sm font-medium text-gray-700">
                         I am a
                       </Label>
-                      <Select 
-                        value={signUpData.role} 
+                      <Select
+                        value={signUpData.role}
                         onValueChange={(value: 'buyer' | 'provider') => setSignUpData({ ...signUpData, role: value })}
                       >
                         <SelectTrigger className="h-11 border-gray-300 focus:border-purple-500 focus:ring-purple-500">
@@ -328,8 +329,8 @@ const AuthPage = () => {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 text-white font-medium"
                     disabled={isLoading || connectionStatus === 'disconnected'}
                   >
