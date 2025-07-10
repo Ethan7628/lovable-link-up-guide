@@ -1,10 +1,10 @@
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const connectDB = require('./config/db');
 
-// Import routes
+// Route imports
 const authRoutes = require('./routes/auth');
 const bookingRoutes = require('./routes/bookings');
 const chatRoutes = require('./routes/chat');
@@ -15,56 +15,41 @@ const postRoutes = require('./routes/posts');
 
 const app = express();
 
-// Connect to database
+// 📦 Connect to MongoDB
 connectDB();
 
-// Create uploads directory if it doesn't exist
-const fs = require('fs');
+// 📁 Ensure upload directories exist
 const uploadsDir = path.join(__dirname, 'uploads');
-const postsDir = path.join(__dirname, 'uploads/posts');
-const profilesDir = path.join(__dirname, 'uploads/profiles');
+const postsDir = path.join(uploadsDir, 'posts');
+const profilesDir = path.join(uploadsDir, 'profiles');
 
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
-}
-if (!fs.existsSync(postsDir)) {
-    fs.mkdirSync(postsDir, { recursive: true });
-}
-if (!fs.existsSync(profilesDir)) {
-    fs.mkdirSync(profilesDir, { recursive: true });
-}
+[uploadsDir, postsDir, profilesDir].forEach((dir) => {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+});
 
-// Serve static files
+// 📂 Serve static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Enable CORS for all routes with enhanced configuration for local development
+// 🌐 Enable CORS for trusted origins
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://192.168.100.163:5173', // ✅ Your machine's IP for LAN access
+    process.env.CORS_ORIGIN,
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps, Postman, curl requests)
-        if (!origin) return callback(null, true);
+        if (!origin) return callback(null, true); // Allow requests like curl/Postman
 
-        const allowedOrigins = [
-            'http://localhost:5173',
-            'http://localhost:3000',
-            'http://127.0.0.1:5173',
-            'http://127.0.0.1:3000',
-            'http://localhost:4173', // Vite preview
-            'http://127.0.0.1:4173',
-            process.env.CORS_ORIGIN,
-            process.env.FRONTEND_URL
-        ].filter(Boolean);
-
-        // In development, be more permissive
-        if (process.env.NODE_ENV === 'development') {
-            console.log('🌐 CORS request from:', origin);
-            return callback(null, true);
-        }
-
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            console.log('⚠️  CORS origin not allowed:', origin);
-            callback(new Error('Not allowed by CORS'));
+            console.warn('🚫 CORS blocked:', origin);
+            callback(new Error('CORS not allowed'));
         }
     },
     credentials: true,
@@ -80,23 +65,23 @@ app.use(cors({
     optionsSuccessStatus: 200
 }));
 
-// Body parser middleware with better limits
+// 🧠 Body parsers for JSON and URL-encoded data
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Add request logging with better formatting
+// 🧾 Request logger for debugging
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${req.method} ${req.path}`);
     if (req.body && Object.keys(req.body).length > 0) {
-        const logBody = { ...req.body };
-        if (logBody.password) logBody.password = '[HIDDEN]';
-        console.log('📦 Body:', logBody);
+        const clone = { ...req.body };
+        if (clone.password) clone.password = '[HIDDEN]';
+        console.log('📦 Body:', clone);
     }
     next();
 });
 
-// Health check route
+// ✅ Health check
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
@@ -106,7 +91,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Mount all routes
+// ✅ Mount API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/chat', chatRoutes);
@@ -115,7 +100,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/posts', postRoutes);
 
-// Test route
+// ✅ Test endpoint
 app.get('/api/test', (req, res) => {
     res.json({
         message: 'BodyConnect Backend is working!',
@@ -124,26 +109,19 @@ app.get('/api/test', (req, res) => {
     });
 });
 
-// Enhanced error handling middleware
+// ❌ Error handling middleware
 app.use((err, req, res, next) => {
     console.error('💥 Server Error:', err.message);
     console.error('📍 Stack trace:', err.stack);
-    console.error('🔍 Request details:', {
-        method: req.method,
-        url: req.url,
-        body: req.body,
-        headers: req.headers
-    });
-
     res.status(500).json({
         msg: 'Something went wrong!',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
 });
 
-// 404 handler
+// ❌ 404 handler
 app.use('*', (req, res) => {
-    console.log('❌ 404 Not Found:', req.method, req.originalUrl);
+    console.warn('❌ 404 Not Found:', req.method, req.originalUrl);
     res.status(404).json({ msg: 'Route not found' });
 });
 
