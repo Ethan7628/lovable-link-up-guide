@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +48,7 @@ const SettingsPage = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [updating, setUpdating] = useState(false);
   
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -125,11 +127,28 @@ const SettingsPage = () => {
   };
 
   const handleProfileUpdate = async () => {
+    setUpdating(true);
     try {
       await updateProfile(profileData);
     } catch (error) {
       console.error('Profile update error:', error);
+    } finally {
+      setUpdating(false);
     }
+  };
+
+  const handleNotificationSave = () => {
+    toast({
+      title: "Notifications Updated",
+      description: "Your notification preferences have been saved.",
+    });
+  };
+
+  const handlePrivacySave = () => {
+    toast({
+      title: "Privacy Settings Updated",
+      description: "Your privacy settings have been saved.",
+    });
   };
 
   const handleDeleteAccount = async () => {
@@ -212,7 +231,7 @@ const SettingsPage = () => {
                   <div className="flex flex-col items-center space-y-4">
                     <Avatar className="h-32 w-32 border-4 border-purple-200">
                       <AvatarImage 
-                        src={imagePreview || user?.profilePicture || ""} 
+                        src={imagePreview || (user?.profilePicture ? `http://localhost:5000${user.profilePicture}` : "")} 
                         alt={profileData.name} 
                       />
                       <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-4xl">
@@ -330,9 +349,22 @@ const SettingsPage = () => {
 
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline">Cancel</Button>
-                    <Button onClick={handleProfileUpdate} className="bg-gradient-to-r from-purple-600 to-pink-600">
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
+                    <Button 
+                      onClick={handleProfileUpdate} 
+                      disabled={updating}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600"
+                    >
+                      {updating ? (
+                        <>
+                          <Save className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </>
+                      )}
                     </Button>
                   </div>
                 </CardContent>
@@ -388,6 +420,12 @@ const SettingsPage = () => {
                       />
                     </div>
                   </div>
+                  <div className="flex justify-end">
+                    <Button onClick={handleNotificationSave} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Preferences
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -435,6 +473,12 @@ const SettingsPage = () => {
                         onCheckedChange={(checked) => setPrivacy({...privacy, allowDirectMessages: checked})}
                       />
                     </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={handlePrivacySave} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Settings
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

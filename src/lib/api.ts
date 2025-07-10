@@ -194,10 +194,28 @@ class ApiClient {
     return this.request('/bookings/my-bookings');
   }
 
+  async getProviderBookings() {
+    return this.request('/bookings/provider-bookings');
+  }
+
   async createBooking(bookingData: any) {
     return this.request('/bookings', {
       method: 'POST',
       body: JSON.stringify(bookingData),
+    });
+  }
+
+  async updateBookingStatus(bookingId: string, status: string) {
+    return this.request(`/bookings/${bookingId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async cancelBooking(bookingId: string, cancellationReason?: string) {
+    return this.request(`/bookings/${bookingId}/cancel`, {
+      method: 'PUT',
+      body: JSON.stringify({ cancellationReason }),
     });
   }
 

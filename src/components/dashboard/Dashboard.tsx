@@ -1,398 +1,664 @@
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
-import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { apiClient } from '@/lib/api';
 import CreatePost from '@/components/posts/CreatePost';
 import { 
   Heart, 
-  MessageSquare, 
-  Calendar, 
-  Star, 
-  Settings, 
+  ArrowLeft, 
   User, 
-  DollarSign,
-  TrendingUp,
-  Users,
-  BookOpen,
-  Camera,
+  Settings, 
   Plus,
-  Bell,
-  Rss
+  Calendar,
+  DollarSign,
+  Star,
+  MessageSquare,
+  BarChart3,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Eye,
+  Share2,
+  MessageCircle,
+  MapPin,
+  Trash2
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+interface Post {
+  _id: string;
+  title: string;
+  description: string;
+  images: string[];
+  serviceCategory: string;
+  price: number;
+  location: string;
+  tags: string[];
+  likes: string[];
+  views: number;
+  comments: any[];
+  createdAt: string;
+  providerId: {
+    _id: string;
+    name: string;
+    photos: string[];
+    profilePicture?: string;
+  };
+}
+
+interface Booking {
+  _id: string;
+  status: string;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
+  venue: string;
+  totalAmount: number;
+  notes?: string;
+  buyerId: {
+    _id: string;
+    name: string;
+    phone: string;
+    profilePicture?: string;
+  };
+  serviceId: {
+    _id: string;
+    title: string;
+    description: string;
+    category: string;
+  };
+  createdAt: string;
+}
 
 const Dashboard = () => {
   const { user, signOut } = useMongoAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadingBookings, setLoadingBookings] = useState(false);
 
   useEffect(() => {
-    if (user && isMobile) {
-      toast({
-        title: `Welcome back, ${user.name}!`,
-        description: "Great to see you again",
-      });
+    if (user?.role === 'provider') {
+      fetchMyPosts();
+      fetchProviderBookings();
+    } else if (user?.role === 'buyer') {
+      fetchMyBookings();
     }
-  }, [user, isMobile, toast]);
+  }, [user]);
 
-  const handleLogout = async () => {
+  const fetchMyPosts = async () => {
+    setLoadingPosts(true);
     try {
-      await signOut();
-      navigate('/');
+      const response = await apiClient.getMyPosts();
+      if (response.success) {
+        setPosts(response.data || []);
+      }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoadingPosts(false);
     }
   };
 
-  const stats = [
-    { 
-      title: 'Total Bookings', 
-      value: '12', 
-      icon: <Calendar className="h-5 w-5" />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
-    },
-    { 
-      title: 'Reviews', 
-      value: '4.8', 
-      icon: <Star className="h-5 w-5" />,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50'
-    },
-    { 
-      title: 'Messages', 
-      value: '8', 
-      icon: <MessageSquare className="h-5 w-5" />,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
-    },
-    { 
-      title: user?.role === 'provider' ? 'Earnings' : 'Spent', 
-      value: user?.role === 'provider' ? '$280' : '$120', 
-      icon: <DollarSign className="h-5 w-5" />,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+  const fetchProviderBookings = async () => {
+    setLoadingBookings(true);
+    try {
+      const response = await apiClient.getProviderBookings();
+      if (response.success) {
+        setBookings(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setLoadingBookings(false);
     }
-  ];
+  };
 
-  const clientActions = [
-    { 
-      title: 'Browse Feed', 
-      icon: <Rss className="h-5 w-5" />, 
-      action: () => navigate('/feed'), 
-      color: 'bg-purple-600 hover:bg-purple-700' 
-    },
-    { 
-      title: 'View Services', 
-      icon: <BookOpen className="h-5 w-5" />, 
-      action: () => navigate('/services'), 
-      color: 'bg-blue-600 hover:bg-blue-700' 
-    },
-    { 
-      title: 'My Bookings', 
-      icon: <Calendar className="h-5 w-5" />, 
-      action: () => navigate('/bookings'), 
-      color: 'bg-green-600 hover:bg-green-700' 
-    },
-    { 
-      title: 'Messages', 
-      icon: <MessageSquare className="h-5 w-5" />, 
-      action: () => navigate('/chat'), 
-      color: 'bg-orange-600 hover:bg-orange-700' 
+  const fetchMyBookings = async () => {
+    setLoadingBookings(true);
+    try {
+      const response = await apiClient.getBookings();
+      if (response.success) {
+        setBookings(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setLoadingBookings(false);
     }
-  ];
+  };
 
-  const providerActions = [
-    { 
-      title: 'Create Post', 
-      icon: <Camera className="h-5 w-5" />, 
-      action: () => {}, 
-      color: 'bg-purple-600 hover:bg-purple-700' 
-    },
-    { 
-      title: 'View Messages', 
-      icon: <MessageSquare className="h-5 w-5" />, 
-      action: () => navigate('/chat'), 
-      color: 'bg-blue-600 hover:bg-blue-700' 
-    },
-    { 
-      title: 'My Bookings', 
-      icon: <Calendar className="h-5 w-5" />, 
-      action: () => navigate('/bookings'), 
-      color: 'bg-green-600 hover:bg-green-700' 
-    },
-    { 
-      title: 'Settings', 
-      icon: <Settings className="h-5 w-5" />, 
-      action: () => navigate('/settings'), 
-      color: 'bg-gray-600 hover:bg-gray-700' 
+  const handleBookingAction = async (bookingId: string, status: 'confirmed' | 'cancelled') => {
+    try {
+      const response = await apiClient.updateBookingStatus(bookingId, status);
+      if (response.success) {
+        toast({
+          title: `Booking ${status}`,
+          description: `The booking has been ${status} successfully.`,
+        });
+        fetchProviderBookings();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update booking status",
+        variant: "destructive",
+      });
     }
-  ];
+  };
 
-  const quickActions = user?.role === 'provider' ? providerActions : clientActions;
+  const handleDeletePost = async (postId: string) => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      try {
+        const response = await apiClient.deletePost(postId);
+        if (response.success) {
+          toast({
+            title: "Post deleted",
+            description: "Your post has been deleted successfully.",
+          });
+          fetchMyPosts();
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete post",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-lg font-medium text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const stats = {
+    totalEarnings: user?.earnings || 0,
+    totalBookings: bookings.length,
+    completedBookings: bookings.filter(b => b.status === 'completed').length,
+    pendingBookings: bookings.filter(b => b.status === 'pending').length,
+    totalPosts: posts.length,
+    totalViews: posts.reduce((sum, post) => sum + post.views, 0),
+    totalLikes: posts.reduce((sum, post) => sum + post.likes.length, 0)
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 prevent-overflow">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-white/20 sticky top-0 z-40">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 mr-2" />
-              <span className="font-bold text-lg sm:text-xl text-gray-900">BodyConnect</span>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Heart className="h-8 w-8 text-purple-600" />
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  BodyConnect
+                </h1>
+              </div>
             </div>
-            
-            {/* Desktop Welcome Message */}
-            {!isMobile && (
-              <div className="hidden md:flex items-center space-x-4">
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Welcome back,</p>
-                  <p className="font-semibold text-gray-900">{user.name}</p>
-                </div>
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                  {user.profilePicture ? (
-                    <img 
-                      src={user.profilePicture} 
-                      alt={user.name}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-white font-semibold text-sm">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Mobile User Avatar */}
-            {isMobile && (
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                {user.profilePicture ? (
-                  <img 
-                    src={user.profilePicture} 
-                    alt={user.name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-white font-semibold text-xs">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/settings')}
-                className="p-2"
+            <div className="flex items-center space-x-4">
+              <Link to="/feed" className="text-purple-600 hover:text-purple-700 transition-colors">
+                Social Feed
+              </Link>
+              <Link to="/settings" className="flex items-center text-purple-600 hover:text-purple-700 transition-colors">
+                <Settings className="h-5 w-5 mr-1" />
+                Settings
+              </Link>
+              <button 
+                onClick={signOut}
+                className="text-red-600 hover:text-red-700 transition-colors"
               >
-                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 px-2 sm:px-4 py-2"
-              >
-                <span className="hidden sm:inline">Logout</span>
-                <span className="sm:hidden">Exit</span>
-              </Button>
+                Sign Out
+              </button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6 sm:space-y-8">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {stats.map((stat, index) => (
-                <Card key={index} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="p-3 sm:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs sm:text-sm font-medium text-gray-600">{stat.title}</p>
-                        <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
-                      </div>
-                      <div className={`${stat.bgColor} ${stat.color} p-2 sm:p-3 rounded-full`}>
-                        {stat.icon}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16 border-4 border-purple-200">
+                  <AvatarImage src={user?.profilePicture || ""} alt={user?.name} />
+                  <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xl">
+                    {user?.name?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    Welcome back, {user?.name}!
+                  </h2>
+                  <p className="text-gray-600">
+                    {user?.role === 'provider' ? 'Manage your services and bookings' : 'Manage your bookings and find services'}
+                  </p>
+                  <Badge variant="secondary" className="mt-1">
+                    {user?.role === 'buyer' ? 'Client' : 'Service Provider'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {user?.role === 'provider' ? (
+              <>
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <DollarSign className="h-8 w-8 text-green-600" />
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Earnings</p>
+                        <p className="text-2xl font-bold text-gray-900">${stats.totalEarnings}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-
-            {/* Quick Actions */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                  {quickActions.map((action, index) => (
-                    <Button
-                      key={index}
-                      onClick={action.action}
-                      className={`${action.color} text-white p-3 sm:p-4 h-auto flex flex-col items-center space-y-1 sm:space-y-2 hover:scale-105 transition-all duration-200`}
-                    >
-                      {action.icon}
-                      <span className="text-xs sm:text-sm font-medium">{action.title}</span>
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Create Post Section for Providers Only */}
-            {user.role === 'provider' && (
-              <CreatePost />
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <Calendar className="h-8 w-8 text-blue-600" />
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBookings}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <Eye className="h-8 w-8 text-purple-600" />
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Post Views</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalViews}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <Heart className="h-8 w-8 text-red-600" />
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Likes</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalLikes}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <>
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <Calendar className="h-8 w-8 text-blue-600" />
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">My Bookings</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.totalBookings}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <CheckCircle className="h-8 w-8 text-green-600" />
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Completed</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.completedBookings}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <Clock className="h-8 w-8 text-yellow-600" />
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Pending</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.pendingBookings}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* User Profile Card */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold text-gray-900">Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    {user.profilePicture ? (
-                      <img 
-                        src={user.profilePicture} 
-                        alt={user.name}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-semibold">
-                        {user.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                    <Badge variant="secondary" className="text-xs">
-                      {user.role === 'provider' ? 'Service Provider' : 'Client'}
-                    </Badge>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/settings')}
-                  className="w-full"
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 mb-6 bg-white/95 backdrop-blur-sm rounded-lg p-1">
+            {user?.role === 'provider' ? (
+              <>
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    activeTab === 'overview' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
-                  <User className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Navigation Links */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold text-gray-900">Navigate</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {user.role === 'buyer' && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => navigate('/feed')}
-                    className="w-full justify-start"
-                  >
-                    <Rss className="h-4 w-4 mr-2" />
-                    Social Feed
-                  </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => navigate('/services')}
-                  className="w-full justify-start"
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab('bookings')}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    activeTab === 'bookings' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Services
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => navigate('/chat')}
-                  className="w-full justify-start"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Messages
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => navigate('/bookings')}
-                  className="w-full justify-start"
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
                   Bookings
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => navigate('/reviews')}
-                  className="w-full justify-start"
+                </button>
+                <button
+                  onClick={() => setActiveTab('posts')}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    activeTab === 'posts' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
-                  <Star className="h-4 w-4 mr-2" />
-                  Reviews
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Activity Feed */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold text-gray-900">Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-3 text-sm">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600">New booking request</span>
-                </div>
-                <div className="flex items-center space-x-3 text-sm">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-600">Message from {user.role === 'provider' ? 'client' : 'provider'}</span>
-                </div>
-                <div className="flex items-center space-x-3 text-sm">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span className="text-gray-600">Profile view</span>
-                </div>
-                <Button variant="ghost" size="sm" className="w-full text-purple-600 hover:text-purple-700">
-                  View All Activity
-                </Button>
-              </CardContent>
-            </Card>
+                  My Posts
+                </button>
+                <button
+                  onClick={() => setActiveTab('create')}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    activeTab === 'create' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Create Post
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    activeTab === 'overview' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab('bookings')}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    activeTab === 'bookings' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  My Bookings
+                </button>
+              </>
+            )}
           </div>
-        </div>
+
+          {/* Tab Content */}
+          {activeTab === 'overview' && (
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  {user?.role === 'provider' ? 'Provider Dashboard' : 'Client Dashboard'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  {user?.role === 'provider' 
+                    ? 'Manage your services, track bookings, and connect with clients.'
+                    : 'Browse services, manage your bookings, and connect with providers.'
+                  }
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Link to="/feed" className="block">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                      <CardContent className="p-4 flex items-center">
+                        <MessageSquare className="h-8 w-8 text-purple-600 mr-4" />
+                        <div>
+                          <h3 className="font-semibold">Social Feed</h3>
+                          <p className="text-sm text-gray-600">Browse and interact with posts</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                  <Link to="/settings" className="block">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                      <CardContent className="p-4 flex items-center">
+                        <Settings className="h-8 w-8 text-purple-600 mr-4" />
+                        <div>
+                          <h3 className="font-semibold">Settings</h3>
+                          <p className="text-sm text-gray-600">Manage your account</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'bookings' && (
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  {user?.role === 'provider' ? 'Booking Requests' : 'My Bookings'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingBookings ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading bookings...</p>
+                  </div>
+                ) : bookings.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No bookings found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {bookings.map((booking) => (
+                      <div key={booking._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Badge className={getStatusColor(booking.status)}>
+                                {booking.status}
+                              </Badge>
+                              <span className="text-sm text-gray-500">
+                                {formatDate(booking.createdAt)}
+                              </span>
+                            </div>
+                            <h3 className="font-semibold text-lg">{booking.serviceId.title}</h3>
+                            <p className="text-gray-600 mb-2">{booking.serviceId.description}</p>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <p className="text-gray-500">Date & Time</p>
+                                <p className="font-medium">
+                                  {formatDate(booking.bookingDate)} at {booking.startTime} - {booking.endTime}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">
+                                  {user?.role === 'provider' ? 'Client' : 'Provider'}
+                                </p>
+                                <p className="font-medium">
+                                  {user?.role === 'provider' ? booking.buyerId.name : booking.serviceId.title}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Venue</p>
+                                <p className="font-medium">{booking.venue}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Amount</p>
+                                <p className="font-medium">${booking.totalAmount}</p>
+                              </div>
+                            </div>
+                            {booking.notes && (
+                              <div className="mt-2">
+                                <p className="text-gray-500 text-sm">Notes</p>
+                                <p className="text-sm">{booking.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                          {user?.role === 'provider' && booking.status === 'pending' && (
+                            <div className="ml-4 space-x-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleBookingAction(booking._id, 'confirmed')}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleBookingAction(booking._id, 'cancelled')}
+                                className="border-red-600 text-red-600 hover:bg-red-50"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Decline
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'posts' && user?.role === 'provider' && (
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-gray-900">My Posts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingPosts ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading posts...</p>
+                  </div>
+                ) : posts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No posts found</p>
+                    <p className="text-sm text-gray-500 mt-2">Create your first post to get started!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {posts.map((post) => (
+                      <div key={post._id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                        {post.images.length > 0 && (
+                          <img
+                            src={`http://localhost:5000${post.images[0]}`}
+                            alt={post.title}
+                            className="w-full h-48 object-cover"
+                          />
+                        )}
+                        <div className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-semibold text-lg">{post.title}</h3>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeletePost(post._id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-gray-600 mb-3 line-clamp-2">{post.description}</p>
+                          <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+                            <Badge variant="secondary">{post.serviceCategory}</Badge>
+                            <span className="font-semibold text-green-600">${post.price}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <div className="flex items-center space-x-4">
+                              <span className="flex items-center">
+                                <Heart className="h-4 w-4 mr-1" />
+                                {post.likes.length}
+                              </span>
+                              <span className="flex items-center">
+                                <Eye className="h-4 w-4 mr-1" />
+                                {post.views}
+                              </span>
+                              <span className="flex items-center">
+                                <MessageCircle className="h-4 w-4 mr-1" />
+                                {post.comments.length}
+                              </span>
+                            </div>
+                            <span className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              {post.location}
+                            </span>
+                          </div>
+                          {post.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {post.tags.map((tag, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'create' && user?.role === 'provider' && (
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-gray-900">Create New Post</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CreatePost onPostCreated={fetchMyPosts} />
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
       </div>
     </div>
   );
