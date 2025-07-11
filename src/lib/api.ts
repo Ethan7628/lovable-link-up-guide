@@ -1,3 +1,4 @@
+// Enhanced API client with improved connection monitoring and error handling
 
 const API_BASE_URL = import.meta.env.PROD 
   ? 'https://bodyconnect-backend.vercel.app/api' 
@@ -10,11 +11,96 @@ interface ApiResponse<T = any> {
   error?: string;
 }
 
+interface HealthResponse {
+  status: string;
+  service: string;
+  timestamp: string;
+  environment: string;
+  database: {
+    status: string;
+    isConnected: boolean;
+    error?: string;
+  };
+}
+
+// Connection state management
+class ConnectionMonitor {
+  private static instance: ConnectionMonitor;
+  private connectionStatus: 'connected' | 'disconnected' | 'checking' = 'checking';
+  private lastChecked: Date | null = null;
+  private listeners: Array<(status: string) => void> = [];
+
+  static getInstance(): ConnectionMonitor {
+    if (!ConnectionMonitor.instance) {
+      ConnectionMonitor.instance = new ConnectionMonitor();
+    }
+    return ConnectionMonitor.instance;
+  }
+
+  getStatus(): string {
+    return this.connectionStatus;
+  }
+
+  addListener(callback: (status: string) => void): void {
+    this.listeners.push(callback);
+  }
+
+  removeListener(callback: (status: string) => void): void {
+    this.listeners = this.listeners.filter(listener => listener !== callback);
+  }
+
+  private notifyListeners(): void {
+    this.listeners.forEach(listener => listener(this.connectionStatus));
+  }
+
+  async checkConnection(force = false): Promise<boolean> {
+    // Don't check too frequently unless forced
+    if (!force && this.lastChecked && Date.now() - this.lastChecked.getTime() < 5000) {
+      return this.connectionStatus === 'connected';
+    }
+
+    try {
+      this.connectionStatus = 'checking';
+      this.notifyListeners();
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(`${API_BASE_URL}/health`, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const health: HealthResponse = await response.json();
+        this.connectionStatus = health.database?.status === 'connected' ? 'connected' : 'disconnected';
+      } else {
+        this.connectionStatus = 'disconnected';
+      }
+    } catch (error) {
+      console.log('Connection check failed:', error);
+      this.connectionStatus = 'disconnected';
+    }
+
+    this.lastChecked = new Date();
+    this.notifyListeners();
+    return this.connectionStatus === 'connected';
+  }
+}
+
 class ApiClient {
+  private connectionMonitor = ConnectionMonitor.getInstance();
+
   private getHeaders(): HeadersInit {
     const token = localStorage.getItem('token');
     return {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
       ...(token && { 'x-auth-token': token }),
     };
   }
@@ -22,62 +108,111 @@ class ApiClient {
   private getMultipartHeaders(): HeadersInit {
     const token = localStorage.getItem('token');
     return {
+      'Cache-Control': 'no-cache',
       ...(token && { 'x-auth-token': token }),
     };
   }
 
+  private async handleNetworkError(error: Error): Promise<string> {
+    // Check if it's a network error
+    if (error instanceof TypeError && (
+      error.message.includes('fetch') || 
+      error.message.includes('network') ||
+      error.message.includes('Failed to fetch')
+    )) {
+      // Try to determine if backend is reachable
+      const isConnected = await this.connectionMonitor.checkConnection(true);
+      if (!isConnected) {
+        return 'Cannot connect to BodyConnect servers. Please check your internet connection and try again.';
+      }
+      return 'Network error occurred. Please try again.';
+    }
+
+    if (error.name === 'AbortError') {
+      return 'Request timed out. Please check your connection and try again.';
+    }
+
+    return error.message || 'An unexpected error occurred';
+  }
+
   async request<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     try {
-      console.log(`Making API request to: ${API_BASE_URL}${endpoint}`);
+      console.log(`🌐 Making API request to: ${API_BASE_URL}${endpoint}`);
       
+      // Set up request timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
+        signal: controller.signal,
         headers: {
           ...this.getHeaders(),
           ...options?.headers,
         },
       });
 
-      console.log(`API response status: ${response.status}`);
+      clearTimeout(timeoutId);
+
+      console.log(`📡 API response status: ${response.status} for ${endpoint}`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ msg: 'Request failed' }));
-        throw new Error(errorData.msg || errorData.message || `HTTP ${response.status}`);
+        const errorData = await response.json().catch(() => ({ 
+          msg: `HTTP ${response.status} - ${response.statusText}` 
+        }));
+        
+        // Handle specific HTTP status codes
+        if (response.status === 401) {
+          // Clear invalid token
+          localStorage.removeItem('token');
+          throw new Error('Authentication required. Please sign in again.');
+        } else if (response.status === 403) {
+          throw new Error('Access denied. You don\'t have permission for this action.');
+        } else if (response.status === 404) {
+          throw new Error('Resource not found. The requested endpoint may not exist.');
+        } else if (response.status === 429) {
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        } else if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        }
+        
+        throw new Error(errorData.msg || errorData.message || errorData.error || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('API response data:', data);
+      console.log('✅ API response received for:', endpoint);
 
       return { success: true, data };
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error('❌ API request failed:', error);
       
-      // Handle network errors specifically
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        return { 
-          success: false, 
-          error: 'Unable to connect to server. Please ensure the backend is running.' 
-        };
-      }
+      const errorMessage = await this.handleNetworkError(error as Error);
       
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+        error: errorMessage
       };
     }
   }
 
   async uploadRequest<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
     try {
-      console.log(`Making upload request to: ${API_BASE_URL}${endpoint}`);
+      console.log(`📤 Making upload request to: ${API_BASE_URL}${endpoint}`);
       
+      // Set up request timeout (longer for uploads)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for uploads
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
+        signal: controller.signal,
         headers: this.getMultipartHeaders(),
         body: formData,
       });
 
-      console.log(`Upload response status: ${response.status}`);
+      clearTimeout(timeoutId);
+
+      console.log(`📡 Upload response status: ${response.status}`);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ msg: 'Upload failed' }));
@@ -85,16 +220,45 @@ class ApiClient {
       }
 
       const data = await response.json();
-      console.log('Upload response data:', data);
+      console.log('✅ Upload completed successfully');
 
       return { success: true, data };
     } catch (error) {
-      console.error('Upload request failed:', error);
+      console.error('❌ Upload request failed:', error);
+      
+      const errorMessage = await this.handleNetworkError(error as Error);
+      
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Upload failed' 
+        error: errorMessage
       };
     }
+  }
+
+  // Health check methods
+  async checkBackendHealth(): Promise<ApiResponse<HealthResponse>> {
+    return this.request<HealthResponse>('/health');
+  }
+
+  async checkDatabaseHealth(): Promise<ApiResponse<any>> {
+    return this.request('/health/database');
+  }
+
+  // Connection monitoring
+  getConnectionStatus(): string {
+    return this.connectionMonitor.getStatus();
+  }
+
+  onConnectionStatusChange(callback: (status: string) => void): void {
+    this.connectionMonitor.addListener(callback);
+  }
+
+  offConnectionStatusChange(callback: (status: string) => void): void {
+    this.connectionMonitor.removeListener(callback);
+  }
+
+  async checkConnection(): Promise<boolean> {
+    return this.connectionMonitor.checkConnection();
   }
 
   // Auth endpoints
@@ -108,7 +272,7 @@ class ApiClient {
     bio?: string;
     location?: string;
   }) {
-    console.log('Registering user:', { ...userData, password: '[HIDDEN]' });
+    console.log('👤 Registering user:', { ...userData, password: '[HIDDEN]' });
     return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
@@ -116,7 +280,7 @@ class ApiClient {
   }
 
   async login(email: string, password: string) {
-    console.log('Logging in user:', email);
+    console.log('🔐 Logging in user:', email);
     return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),

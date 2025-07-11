@@ -1,110 +1,209 @@
-// require('dotenv').config();
-// const mongoose = require('mongoose');
-
-// const connectDB = async () => {
-//     try {
-//         // Use environment variable or fallback to local MongoDB
-//         const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/soulsync-dating-app';
-
-//         console.log('🔌 Attempting to connect to MongoDB...');
-//         console.log('📍 MongoDB URI:', mongoURI.includes('mongodb+srv') ? 'Cloud MongoDB Atlas' : 'Local MongoDB (127.0.0.1)');
-
-//         // Updated connection options (remove deprecated)
-//         const conn = await mongoose.connect(mongoURI, {
-//             serverSelectionTimeoutMS: 5000, // 5 second timeout
-//             socketTimeoutMS: 45000 // 45 second socket timeout
-//         });
-
-//         console.log(`✅ MongoDB Connected Successfully!`);
-//         console.log(`🏠 Host: ${conn.connection.host}`);
-//         console.log(`📚 Database: ${conn.connection.name}`);
-//         console.log(`🔌 Connection State: ${conn.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
-
-//         // Test the connection with a simple ping
-//         await mongoose.connection.db.admin().ping();
-//         console.log('🏓 MongoDB ping test successful!');
-
-//         // Log collection info
-//         const collections = await mongoose.connection.db.listCollections().toArray();
-//         console.log(`📦 Available collections: ${collections.length > 0 ? collections.map(c => c.name).join(', ') : 'None (fresh database)'}`);
-
-//     } catch (error) {
-//         console.error(`💥 MongoDB Connection Error: ${error.message}`);
-
-//         if (error.message.includes('ECONNREFUSED')) {
-//             console.error('❌ MongoDB server is not running locally!');
-//             console.error('📝 Please start MongoDB using one of these commands:');
-//             console.error('   🪟 Windows: net start MongoDB OR mongod');
-//             console.error('   🍎 Mac: brew services start mongodb-community OR mongod');
-//             console.error('   🐧 Linux: sudo systemctl start mongod OR mongod');
-//             console.error('💡 Tip: You can also use MongoDB Compass to start a local instance');
-//         } else if (error.message.includes('authentication')) {
-//             console.error('❌ MongoDB authentication failed. Check your credentials in .env file.');
-//         } else if (error.message.includes('ENOTFOUND')) {
-//             console.error('❌ MongoDB host not found. Using 127.0.0.1 instead of localhost.');
-//         } else {
-//             console.error('❌ Unexpected error:', error.stack);
-//         }
-
-//         console.error('🔧 Troubleshooting tips:');
-//         console.error('   1. Ensure MongoDB is installed and running');
-//         console.error('   2. Check if port 27017 is available');
-//         console.error('   3. Try connecting with MongoDB Compass to test connection');
-//         console.error('   4. Check firewall settings');
-
-//         process.exit(1);
-//     }
-// };
-
-// module.exports = connectDB;
-// config/db.js
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
-    try {
-        console.log('🔌 Attempting to connect to MongoDB Atlas...');
-        console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
-        
-        if (!process.env.MONGO_URI) {
-            throw new Error('MONGO_URI environment variable is not defined');
-        }
-
-        console.log('📍 MongoDB URI configured:', process.env.MONGO_URI.includes('mongodb+srv') ? 'MongoDB Atlas' : 'Local MongoDB');
-
-        // MongoDB Atlas optimized connection options
-        const conn = await mongoose.connect(process.env.MONGO_URI, {
-            serverSelectionTimeoutMS: 30000, // 30 seconds for Vercel cold starts
-            socketTimeoutMS: 45000,
-            maxPoolSize: 10,
-            retryWrites: true,
-            w: 'majority',
-            authSource: 'admin'
-        });
-
-        console.log(`✅ MongoDB Connected Successfully!`);
-        console.log(`🏠 Host: ${conn.connection.host}`);
-        console.log(`📚 Database: ${conn.connection.name}`);
-        console.log(`🔌 Connection State: ${conn.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
-
-        // Test the connection
-        await mongoose.connection.db.admin().ping();
-        console.log('🏓 MongoDB ping test successful!');
-
-    } catch (err) {
-        console.error('💥 MongoDB Connection Error:', err.message);
-        console.error('🔧 Troubleshooting tips:');
-        console.error('  1. Ensure MongoDB Atlas IP whitelist includes 0.0.0.0/0 for Vercel deployments');
-        console.error('  2. Verify your MONGO_URI environment variable');
-        console.error('  3. Check MongoDB Atlas cluster status');
-        console.error('  4. Ensure network access is configured for "Allow access from anywhere"');
-        
-        if (process.env.NODE_ENV !== 'production') {
-            process.exit(1);
-        } else {
-            // In production, log error but don't exit to allow Vercel to retry
-            console.error('🚨 Production: MongoDB connection failed, but continuing...');
-        }
-    }
+// Connection state tracking
+let connectionState = {
+  isConnected: false,
+  isConnecting: false,
+  lastConnectAttempt: null,
+  retryCount: 0,
+  error: null
 };
 
-module.exports = connectDB;
+// Connection retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 5,
+  retryDelay: 2000, // 2 seconds
+  backoffMultiplier: 1.5
+};
+
+// Health check function
+const checkConnectionHealth = async () => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.db.admin().ping();
+      connectionState.isConnected = true;
+      connectionState.error = null;
+      return { healthy: true, status: 'connected' };
+    } else {
+      connectionState.isConnected = false;
+      return { healthy: false, status: 'disconnected' };
+    }
+  } catch (error) {
+    connectionState.isConnected = false;
+    connectionState.error = error.message;
+    return { healthy: false, status: 'error', error: error.message };
+  }
+};
+
+// Enhanced connection function with retry logic
+const connectWithRetry = async (uri, options, retryCount = 0) => {
+  try {
+    connectionState.isConnecting = true;
+    connectionState.lastConnectAttempt = new Date();
+    
+    console.log(`🔌 MongoDB connection attempt ${retryCount + 1}/${RETRY_CONFIG.maxRetries + 1}`);
+    
+    const conn = await mongoose.connect(uri, options);
+    
+    connectionState.isConnected = true;
+    connectionState.isConnecting = false;
+    connectionState.retryCount = 0;
+    connectionState.error = null;
+    
+    console.log(`✅ MongoDB Connected Successfully!`);
+    console.log(`🏠 Host: ${conn.connection.host}`);
+    console.log(`📚 Database: ${conn.connection.name}`);
+    console.log(`🔌 Connection State: Connected`);
+    
+    // Test the connection
+    await mongoose.connection.db.admin().ping();
+    console.log('🏓 MongoDB ping test successful!');
+    
+    // Log collection info
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    console.log(`📦 Available collections: ${collections.length > 0 ? collections.map(c => c.name).join(', ') : 'None (fresh database)'}`);
+    
+    return conn;
+    
+  } catch (error) {
+    connectionState.isConnecting = false;
+    connectionState.error = error.message;
+    connectionState.retryCount = retryCount;
+    
+    if (retryCount < RETRY_CONFIG.maxRetries) {
+      const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, retryCount);
+      console.log(`❌ Connection failed, retrying in ${delay}ms... (${retryCount + 1}/${RETRY_CONFIG.maxRetries})`);
+      console.log(`💥 Error: ${error.message}`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return connectWithRetry(uri, options, retryCount + 1);
+    } else {
+      throw error;
+    }
+  }
+};
+
+const connectDB = async () => {
+  try {
+    console.log('� Initializing MongoDB Atlas connection...');
+    console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
+    
+    if (!process.env.MONGO_URI) {
+      throw new Error('MONGO_URI environment variable is not defined. Please check your .env file.');
+    }
+
+    // Enhanced MongoDB Atlas connection options for cross-device compatibility
+    const mongoOptions = {
+      // Connection settings
+      serverSelectionTimeoutMS: 30000, // 30 seconds for cold starts
+      socketTimeoutMS: 45000, // 45 seconds
+      connectTimeoutMS: 30000, // 30 seconds
+      
+      // Connection pool settings for better performance across devices
+      maxPoolSize: process.env.NODE_ENV === 'production' ? 10 : 5,
+      minPoolSize: 1,
+      maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+      
+      // Retry and reliability settings
+      retryWrites: true,
+      retryReads: true,
+      w: 'majority',
+      
+      // Authentication
+      authSource: 'admin',
+      
+      // Network settings for cross-device compatibility
+      family: 4, // Use IPv4, skip trying IPv6
+      heartbeatFrequencyMS: 10000, // Check server every 10 seconds
+      serverSelectionRetryDelayMS: 2000, // Retry server selection every 2 seconds
+      
+      // SSL/TLS settings for Atlas
+      ssl: true,
+      sslValidate: true,
+      
+      // Buffer settings
+      bufferMaxEntries: 0, // Disable mongoose buffering
+      bufferCommands: false, // Disable mongoose buffering
+    };
+
+    console.log('📍 MongoDB URI configured:', process.env.MONGO_URI.includes('mongodb+srv') ? 'MongoDB Atlas (Cloud)' : 'Local MongoDB');
+    console.log('⚙️ Connection options:', {
+      maxPoolSize: mongoOptions.maxPoolSize,
+      serverSelectionTimeout: mongoOptions.serverSelectionTimeoutMS,
+      environment: process.env.NODE_ENV
+    });
+
+    const conn = await connectWithRetry(process.env.MONGO_URI, mongoOptions);
+    
+    // Set up connection event handlers for monitoring
+    mongoose.connection.on('connected', () => {
+      console.log('📡 MongoDB Atlas connected');
+      connectionState.isConnected = true;
+      connectionState.error = null;
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error('💥 MongoDB Atlas connection error:', err.message);
+      connectionState.error = err.message;
+      connectionState.isConnected = false;
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('� MongoDB Atlas disconnected');
+      connectionState.isConnected = false;
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('� MongoDB Atlas reconnected');
+      connectionState.isConnected = true;
+      connectionState.error = null;
+    });
+
+    // Graceful shutdown handling
+    process.on('SIGINT', async () => {
+      console.log('🛑 Received SIGINT, closing MongoDB connection...');
+      await mongoose.connection.close();
+      process.exit(0);
+    });
+
+    return conn;
+
+  } catch (err) {
+    connectionState.isConnected = false;
+    connectionState.error = err.message;
+    
+    console.error('💥 MongoDB Connection Failed:', err.message);
+    console.error('🔧 Troubleshooting Guide:');
+    console.error('  1. Verify MongoDB Atlas cluster is running and accessible');
+    console.error('  2. Check Network Access settings in MongoDB Atlas:');
+    console.error('     - Add 0.0.0.0/0 to IP Access List for production');
+    console.error('     - Or add your current IP address for development');
+    console.error('  3. Verify Database Access (Database Users) in MongoDB Atlas');
+    console.error('  4. Ensure MONGO_URI is correctly formatted:');
+    console.error('     mongodb+srv://username:password@cluster.mongodb.net/dbname?retryWrites=true&w=majority');
+    console.error('  5. Check MongoDB Atlas cluster status in the dashboard');
+    console.error('  6. Verify your internet connection and firewall settings');
+    
+    if (err.message.includes('authentication')) {
+      console.error('🔐 Authentication Error: Check username and password in MONGO_URI');
+    }
+    
+    if (err.message.includes('ENOTFOUND') || err.message.includes('ECONNREFUSED')) {
+      console.error('🌐 Network Error: Check internet connection and MongoDB Atlas network settings');
+    }
+    
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    } else {
+      // In production (Vercel), log error but continue to allow retries
+      console.error('🚨 Production: MongoDB connection failed, service will retry...');
+    }
+  }
+};
+
+// Export connection state and health check for monitoring
+module.exports = {
+  connectDB,
+  getConnectionState: () => connectionState,
+  checkConnectionHealth
+};
