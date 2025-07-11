@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { useMongoAuth } from '@/contexts/MongoAuthContext';
+import { useFirebaseAuth } from '@/contexts/FirebaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@/lib/api';
+import { firebaseApiClient } from '@/lib/firebase-api';
 import { Heart } from 'lucide-react';
 import PostCard from './PostCard';
 
@@ -40,7 +40,7 @@ interface Post {
 }
 
 const SocialFeed = () => {
-  const { user } = useMongoAuth();
+  const { user } = useFirebaseAuth();
   const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ const SocialFeed = () => {
 
   const fetchPosts = async () => {
     try {
-      const response = await apiClient.getPosts({ limit: 20 });
+      const response = await firebaseApiClient.getPosts({ limit: 20 });
       if (response.success && response.data) {
         setPosts(response.data as Post[]);
       }
@@ -70,7 +70,7 @@ const SocialFeed = () => {
 
   const handleLike = async (postId: string) => {
     try {
-      const response = await apiClient.likePost(postId);
+      const response = await firebaseApiClient.likePost(postId);
       if (response.success) {
         setPosts(prev => prev.map(post => {
           if (post._id === postId) {
@@ -96,7 +96,7 @@ const SocialFeed = () => {
 
   const handleComment = async (postId: string, commentText: string) => {
     try {
-      const response = await apiClient.addComment(postId, commentText);
+      const response = await firebaseApiClient.addComment(postId, commentText);
       if (response.success && response.data) {
         setPosts(prev => prev.map(post => {
           if (post._id === postId) {
