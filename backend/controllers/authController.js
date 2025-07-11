@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    limits: { fileSize: 5 * 1024 * 1024 * 1024 }, // 50MB limit
     fileFilter: function (req, file, cb) {
         const allowedTypes = /jpeg|jpg|png|gif/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -35,7 +35,7 @@ const register = async (req, res) => {
     try {
         console.log('🔍 Registration attempt received');
         console.log('📝 Request body:', { ...req.body, password: '[HIDDEN]' });
-        
+
         const { name, email, password, phone, age, bio, photos, role = 'buyer', location } = req.body;
 
         // Enhanced validation
@@ -76,13 +76,13 @@ const register = async (req, res) => {
         console.log('✅ Validation passed, creating user...');
 
         // Create user
-        user = new User({ 
-            name: name.trim(), 
-            email: email.trim().toLowerCase(), 
+        user = new User({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
             password: password, // Will be hashed by pre-save middleware
-            phone: phone.trim(), 
-            age: age ? parseInt(age) : undefined, 
-            bio: bio || '', 
+            phone: phone.trim(),
+            age: age ? parseInt(age) : undefined,
+            bio: bio || '',
             photos: photos || [],
             role,
             location: location || '',
@@ -99,7 +99,7 @@ const register = async (req, res) => {
 
         console.log('🎉 Registration successful for:', email);
 
-        res.status(201).json({ 
+        res.status(201).json({
             token,
             message: 'User registered successfully',
             user: {
@@ -112,14 +112,14 @@ const register = async (req, res) => {
     } catch (err) {
         console.error('💥 Registration error:', err.message);
         console.error('📍 Error stack:', err.stack);
-        
+
         if (err.code === 11000) {
             // Duplicate key error
             const field = Object.keys(err.keyPattern)[0];
             return res.status(400).json({ msg: `${field} already exists` });
         }
-        
-        res.status(500).json({ 
+
+        res.status(500).json({
             msg: 'Server error during registration',
             error: process.env.NODE_ENV === 'development' ? err.message : undefined
         });
@@ -130,7 +130,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     try {
         console.log('🔍 Login attempt for:', req.body.email);
-        
+
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -169,7 +169,7 @@ const login = async (req, res) => {
         const payload = { id: user._id, role: user.role };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        res.json({ 
+        res.json({
             token,
             message: 'Login successful',
             user: {
@@ -182,7 +182,7 @@ const login = async (req, res) => {
     } catch (err) {
         console.error('💥 Login error:', err.message);
         console.error('📍 Error stack:', err.stack);
-        res.status(500).json({ 
+        res.status(500).json({
             msg: 'Server error during login',
             error: process.env.NODE_ENV === 'development' ? err.message : undefined
         });
@@ -196,7 +196,7 @@ const getProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ msg: 'User not found' });
         }
-        
+
         const userProfile = {
             id: user._id,
             name: user.name,
@@ -215,7 +215,7 @@ const getProfile = async (req, res) => {
             services: user.services || [],
             earnings: user.earnings || 0
         };
-        
+
         res.json(userProfile);
     } catch (err) {
         console.error('Profile fetch error:', err);
@@ -227,16 +227,16 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         console.log('Profile update request:', req.body);
-        
+
         const { name, age, bio, photos, location, phone, services } = req.body;
-        
+
         const updateData = { name, age, bio, photos, location, phone };
-        
+
         // Only providers can update services
         if (req.user.role === 'provider' && services) {
             updateData.services = services;
         }
-        
+
         const user = await User.findByIdAndUpdate(
             req.user.id,
             updateData,
@@ -265,7 +265,7 @@ const updateProfile = async (req, res) => {
             services: user.services || [],
             earnings: user.earnings || 0
         };
-        
+
         res.json(userProfile);
     } catch (err) {
         console.error('Profile update error:', err);
@@ -281,7 +281,7 @@ const uploadProfilePicture = async (req, res) => {
         }
 
         const profilePictureUrl = `/uploads/profiles/${req.file.filename}`;
-        
+
         // Update user's profile picture in database
         const user = await User.findByIdAndUpdate(
             req.user.id,
@@ -293,7 +293,7 @@ const uploadProfilePicture = async (req, res) => {
             return res.status(404).json({ msg: 'User not found' });
         }
 
-        res.json({ 
+        res.json({
             message: 'Profile picture uploaded successfully',
             profilePictureUrl: profilePictureUrl
         });
@@ -303,11 +303,11 @@ const uploadProfilePicture = async (req, res) => {
     }
 };
 
-module.exports = { 
-    register, 
-    login, 
-    getProfile, 
-    updateProfile, 
+module.exports = {
+    register,
+    login,
+    getProfile,
+    updateProfile,
     uploadProfilePicture,
-    upload 
+    upload
 };

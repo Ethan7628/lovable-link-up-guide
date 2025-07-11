@@ -1,11 +1,15 @@
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
 
-// Export auth as the main export (function)
 module.exports = function (req, res, next) {
-    const token = req.header('x-auth-token');
+    // Get token from header, cookie, or query param
+    const token = req.header('x-auth-token') || req.cookies?.token || req.query?.token;
 
     if (!token) {
-        return res.status(401).json({ msg: 'No token, authorization denied' });
+        return res.status(401).json({
+            success: false,
+            msg: 'No authentication token found',
+            solution: 'Please login or provide a valid token'
+        });
     }
 
     try {
@@ -13,21 +17,25 @@ module.exports = function (req, res, next) {
         req.user = decoded;
         next();
     } catch (err) {
-        res.status(401).json({ msg: 'Token is not valid' });
+        console.error('JWT Verification Error:', err.message);
+        res.status(401).json({
+            success: false,
+            msg: 'Invalid or expired token',
+            solution: 'Please login again to get a new token'
+        });
     }
 };
 
-// If you want to keep role-based middleware, export it separately:
 module.exports.requireRole = (roles) => {
     return (req, res, next) => {
-        if (!req.user) {
-            return res.status(401).json({ msg: 'No user data found' });
-        }
-
+        if (!req.user) return res.status(401).json({ msg: 'Unauthorized' });
         if (!roles.includes(req.user.role)) {
-            return res.status(403).json({ msg: 'Access denied' });
+            return res.status(403).json({
+                msg: 'Insufficient permissions',
+                requiredRoles: roles,
+                yourRole: req.user.role
+            });
         }
-
         next();
     };
 };

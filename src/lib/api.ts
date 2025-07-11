@@ -1,5 +1,7 @@
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://bodyconnect-backend.vercel.app/api' 
+  : 'http://localhost:5000/api';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -54,7 +56,7 @@ class ApiClient {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         return { 
           success: false, 
-          error: 'Unable to connect to server. Please ensure the backend is running on http://localhost:5000' 
+          error: 'Unable to connect to server. Please ensure the backend is running.' 
         };
       }
       
