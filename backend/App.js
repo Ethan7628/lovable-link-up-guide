@@ -38,9 +38,9 @@ const allowedOrigins = [
     'http://127.0.0.1:3000',
     'https://bodyconnect.vercel.app',
     'https://bodyconnect-backend.vercel.app',
-    process.env.CORS_ORIGIN,
+    ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : []),
     process.env.FRONTEND_URL
-].filter(Boolean);
+].filter(Boolean).map(origin => origin.trim());
 
 app.use(cors({
     origin: function (origin, callback) {

@@ -62,26 +62,48 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        console.log('🔌 Attempting to connect to MongoDB...');
+        console.log('🔌 Attempting to connect to MongoDB Atlas...');
+        console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
+        
+        if (!process.env.MONGO_URI) {
+            throw new Error('MONGO_URI environment variable is not defined');
+        }
 
-        // Add these mongoose connection options
+        console.log('📍 MongoDB URI configured:', process.env.MONGO_URI.includes('mongodb+srv') ? 'MongoDB Atlas' : 'Local MongoDB');
+
+        // MongoDB Atlas optimized connection options
         const conn = await mongoose.connect(process.env.MONGO_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
+            serverSelectionTimeoutMS: 30000, // 30 seconds for Vercel cold starts
+            socketTimeoutMS: 45000,
+            maxPoolSize: 10,
             retryWrites: true,
-            w: 'majority'
+            w: 'majority',
+            authSource: 'admin'
         });
 
-        console.log(`📍 MongoDB Connected: ${conn.connection.host}`);
+        console.log(`✅ MongoDB Connected Successfully!`);
+        console.log(`🏠 Host: ${conn.connection.host}`);
+        console.log(`📚 Database: ${conn.connection.name}`);
+        console.log(`🔌 Connection State: ${conn.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
+
+        // Test the connection
+        await mongoose.connection.db.admin().ping();
+        console.log('🏓 MongoDB ping test successful!');
+
     } catch (err) {
         console.error('💥 MongoDB Connection Error:', err.message);
         console.error('🔧 Troubleshooting tips:');
-        console.error('  1. Ensure MongoDB Atlas IP whitelist includes your current IP');
-        console.error('  2. Verify your MONGO_URI in .env file');
-        console.error('  3. Check internet connection');
-        console.error('  4. Try connecting with MongoDB Compass');
-        process.exit(1);
+        console.error('  1. Ensure MongoDB Atlas IP whitelist includes 0.0.0.0/0 for Vercel deployments');
+        console.error('  2. Verify your MONGO_URI environment variable');
+        console.error('  3. Check MongoDB Atlas cluster status');
+        console.error('  4. Ensure network access is configured for "Allow access from anywhere"');
+        
+        if (process.env.NODE_ENV !== 'production') {
+            process.exit(1);
+        } else {
+            // In production, log error but don't exit to allow Vercel to retry
+            console.error('🚨 Production: MongoDB connection failed, but continuing...');
+        }
     }
 };
 
