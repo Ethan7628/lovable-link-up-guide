@@ -2,10 +2,9 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
 const connectDB = require('./config/db');
 
-// Route imports
+// Import routes
 const authRoutes = require('./routes/auth');
 const bookingRoutes = require('./routes/bookings');
 const chatRoutes = require('./routes/chat');
@@ -16,83 +15,98 @@ const postRoutes = require('./routes/posts');
 
 const app = express();
 
-// 📦 Connect to MongoDB
+// Connect to database
 connectDB();
 
-// 📁 Ensure upload directories exist
+// Create uploads directory if it doesn't exist
+const fs = require('fs');
 const uploadsDir = path.join(__dirname, 'uploads');
-const postsDir = path.join(uploadsDir, 'posts');
-const profilesDir = path.join(uploadsDir, 'profiles');
+const postsDir = path.join(__dirname, 'uploads/posts');
+const profilesDir = path.join(__dirname, 'uploads/profiles');
 
-[uploadsDir, postsDir, profilesDir].forEach((dir) => {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+if (!fs.existsSync(postsDir)) {
+    fs.mkdirSync(postsDir, { recursive: true });
+}
+if (!fs.existsSync(profilesDir)) {
+    fs.mkdirSync(profilesDir, { recursive: true });
+}
 
-// 📂 Serve static uploads
+// Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 🌐 Enable CORS for trusted origins
-const allowedOrigins = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://bodyconnect.vercel.app',
-    'https://bodyconnect-backend.vercel.app',
-    ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : []),
-    process.env.FRONTEND_URL
-].filter(Boolean).map(origin => origin.trim());
-
+// Enable CORS for all routes with enhanced configuration for local development
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
+        // Allow requests with no origin (like mobile apps, Postman, curl requests)
         if (!origin) return callback(null, true);
 
-        if (allowedOrigins.some(allowedOrigin =>
-            typeof allowedOrigin === 'string' && allowedOrigin.includes('*')
-                ? true
-                : allowedOrigin === origin
-        )) {
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:3000',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:3000',
+            'http://localhost:4173', // Vite preview
+            'http://127.0.0.1:4173',
+            process.env.CORS_ORIGIN,
+            process.env.FRONTEND_URL
+        ].filter(Boolean);
+
+        // In development, be more permissive
+        if (process.env.NODE_ENV === 'development') {
+            console.log('🌐 CORS request from:', origin);
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            console.warn('🚫 CORS blocked origin:', origin);
-            console.log('🔍 Allowed origins:', allowedOrigins);
-            callback(null, true); // Allow all origins in production for now
+            console.log('⚠️  CORS origin not allowed:', origin);
+            callback(new Error('Not allowed by CORS'));
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'x-auth-token',
+        'X-Requested-With',
+        'Accept',
+        'Origin'
+    ],
     optionsSuccessStatus: 200
 }));
 
-// 🧠 Body parsers for JSON and URL-encoded data
+// Body parser middleware with better limits
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// ✅ Health check - improved
+// Add request logging with better formatting
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${req.method} ${req.path}`);
+    if (req.body && Object.keys(req.body).length > 0) {
+        const logBody = { ...req.body };
+        if (logBody.password) logBody.password = '[HIDDEN]';
+        console.log('📦 Body:', logBody);
+    }
+    next();
+});
+
+// Health check route
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
         service: 'BodyConnect API',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development',
-        mongodb: 'connected'
+        environment: process.env.NODE_ENV || 'development'
     });
 });
 
-// Debug middleware to check incoming requests
-app.use((req, res, next) => {
-    console.log('Incoming request:', {
-        method: req.method,
-        url: req.originalUrl,
-        headers: req.headers,
-        ip: req.ip
-    });
-    next();
-});
-
-// ✅ Mount API routes
+// Mount all routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/chat', chatRoutes);
@@ -101,7 +115,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/posts', postRoutes);
 
-// ✅ Test endpoint
+// Test route
 app.get('/api/test', (req, res) => {
     res.json({
         message: 'BodyConnect Backend is working!',
@@ -110,19 +124,26 @@ app.get('/api/test', (req, res) => {
     });
 });
 
-// ❌ Error handling middleware
+// Enhanced error handling middleware
 app.use((err, req, res, next) => {
     console.error('💥 Server Error:', err.message);
     console.error('📍 Stack trace:', err.stack);
+    console.error('🔍 Request details:', {
+        method: req.method,
+        url: req.url,
+        body: req.body,
+        headers: req.headers
+    });
+
     res.status(500).json({
         msg: 'Something went wrong!',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
 });
 
-// ❌ 404 handler
+// 404 handler
 app.use('*', (req, res) => {
-    console.warn('❌ 404 Not Found:', req.method, req.originalUrl);
+    console.log('❌ 404 Not Found:', req.method, req.originalUrl);
     res.status(404).json({ msg: 'Route not found' });
 });
 
