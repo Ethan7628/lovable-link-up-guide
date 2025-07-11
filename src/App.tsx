@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { FirebaseAuthProvider, useFirebaseAuth } from "./contexts/FirebaseAuthContext";
+import { MongoAuthProvider, useMongoAuth } from "./contexts/MongoAuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./components/auth/AuthPage";
@@ -22,7 +22,7 @@ import Navbar from "./components/layout/Navbar";
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
-  const { user, loading } = useFirebaseAuth();
+  const { user, loading } = useMongoAuth();
 
   if (loading) {
     return (
@@ -92,9 +92,9 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <FirebaseAuthProvider>
+          <MongoAuthProvider>
             <AppRoutes />
-          </FirebaseAuthProvider>
+          </MongoAuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

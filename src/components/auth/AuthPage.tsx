@@ -8,12 +8,39 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useFirebaseAuth } from '@/contexts/FirebaseAuthContext';
-import { Heart, Sparkles, Users, Star, Shield, Calendar, CheckCircle } from 'lucide-react';
+import { useMongoAuth } from '@/contexts/MongoAuthContext';
+import { Heart, Sparkles, Users, Star, Shield, Calendar, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 
 const AuthPage = () => {
-  const { signIn, signUp } = useFirebaseAuth();
+  const { signIn, signUp } = useMongoAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+
+  // Check backend connection
+  React.useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const API_BASE_URL = import.meta.env.PROD 
+          ? 'https://bodyconnect-backend.vercel.app/api' 
+          : 'http://localhost:5000/api';
+        
+        const response = await fetch(`${API_BASE_URL}/health`, {
+          method: 'GET',
+        });
+        
+        if (response.ok) {
+          setConnectionStatus('connected');
+        } else {
+          setConnectionStatus('disconnected');
+        }
+      } catch (error) {
+        console.log('Backend connection check failed:', error);
+        setConnectionStatus('disconnected');
+      }
+    };
+
+    checkConnection();
+  }, []);
 
   // Sign In form state
   const [signInData, setSignInData] = useState({
@@ -103,13 +130,24 @@ const AuthPage = () => {
         transition={{ duration: 0.6 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Firebase Connection Status */}
-        <Alert className="mb-6 border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            Connected to Firebase! Ready for secure authentication and data storage.
-          </AlertDescription>
-        </Alert>
+        {/* Connection Status Alert */}
+        {connectionStatus === 'disconnected' && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <WifiOff className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              Cannot connect to backend server. Please ensure your backend is running on the correct port.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {connectionStatus === 'connected' && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <Wifi className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Connected to BodyConnect backend successfully!
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
           <CardHeader className="space-y-1 text-center pb-8">
@@ -175,7 +213,7 @@ const AuthPage = () => {
                   <Button
                     type="submit"
                     className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 text-white font-medium"
-                    disabled={isLoading}
+                    disabled={isLoading || connectionStatus === 'disconnected'}
                   >
                     {isLoading ? (
                       <motion.div
@@ -303,7 +341,7 @@ const AuthPage = () => {
                   <Button
                     type="submit"
                     className="w-full h-11 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-200 text-white font-medium"
-                    disabled={isLoading}
+                    disabled={isLoading || connectionStatus === 'disconnected'}
                   >
                     {isLoading ? (
                       <motion.div
@@ -334,7 +372,7 @@ const AuthPage = () => {
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
             <Shield className="h-6 w-6 text-pink-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">Secure with Firebase</p>
+            <p className="text-sm font-medium text-gray-700">Secure Booking</p>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
             <Calendar className="h-6 w-6 text-purple-600 mx-auto mb-2" />
@@ -342,11 +380,25 @@ const AuthPage = () => {
           </div>
         </motion.div>
 
-        {/* Firebase Status Indicator */}
+        {/* Backend Status Indicator */}
         <div className="mt-4 text-center">
           <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span>Firebase Connected & Ready</span>
+            {connectionStatus === 'connected' ? (
+              <>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Backend Connected</span>
+              </>
+            ) : connectionStatus === 'disconnected' ? (
+              <>
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span>Backend Disconnected</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <span>Checking Connection...</span>
+              </>
+            )}
           </div>
         </div>
       </motion.div>
