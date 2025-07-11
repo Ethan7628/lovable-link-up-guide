@@ -20,12 +20,21 @@ const AuthPage = () => {
   React.useEffect(() => {
     const checkConnection = async () => {
       try {
-        const response = await fetch('http://192.168.100.163:5000/api/auth/profile', {
-
+        const API_BASE_URL = import.meta.env.PROD 
+          ? 'https://bodyconnect-backend.vercel.app/api' 
+          : 'http://localhost:5000/api';
+        
+        const response = await fetch(`${API_BASE_URL}/health`, {
           method: 'GET',
         });
-        setConnectionStatus('connected');
+        
+        if (response.ok) {
+          setConnectionStatus('connected');
+        } else {
+          setConnectionStatus('disconnected');
+        }
       } catch (error) {
+        console.log('Backend connection check failed:', error);
         setConnectionStatus('disconnected');
       }
     };
@@ -126,7 +135,7 @@ const AuthPage = () => {
           <Alert className="mb-6 border-red-200 bg-red-50">
             <WifiOff className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
-              Cannot connect to backend server. Please ensure your MongoDB backend is running on http://localhost:5000
+              Cannot connect to backend server. Please ensure your backend is running on the correct port.
             </AlertDescription>
           </Alert>
         )}

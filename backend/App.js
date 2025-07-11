@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -69,27 +70,17 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// 🧾 Request logger for debugging
-// app.use((req, res, next) => {
-//     const timestamp = new Date().toISOString();
-//     console.log(`[${timestamp}] ${req.method} ${req.path}`);
-//     if (req.body && Object.keys(req.body).length > 0) {
-//         const clone = { ...req.body };
-//         if (clone.password) clone.password = '[HIDDEN]';
-//         console.log('📦 Body:', clone);
-//     }
-//     next();
-// });
-
-// ✅ Health check
+// ✅ Health check - improved
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
         service: 'BodyConnect API',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        mongodb: 'connected'
     });
 });
+
 // Debug middleware to check incoming requests
 app.use((req, res, next) => {
     console.log('Incoming request:', {

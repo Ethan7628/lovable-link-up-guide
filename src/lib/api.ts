@@ -56,7 +56,7 @@ class ApiClient {
       if (error instanceof TypeError && error.message.includes('fetch')) {
         return { 
           success: false, 
-          error: 'Unable to connect to server. Please check your internet connection.' 
+          error: 'Unable to connect to server. Please ensure the backend is running.' 
         };
       }
       

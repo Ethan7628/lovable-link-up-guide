@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +13,7 @@ import {
   Zap,
   ArrowRight,
   CheckCircle,
-  Sparkles,
-  UserPlus
+  Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -80,13 +78,13 @@ const Index = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
                 <Heart className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 BodyConnect
               </h1>
             </motion.div>
             
             <motion.div 
-              className="flex items-center space-x-4"
+              className="flex items-center space-x-2 sm:space-x-4"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -94,24 +92,25 @@ const Index = () => {
               {user ? (
                 <Button 
                   onClick={() => navigate("/dashboard")}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-full"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 sm:px-6 py-2 rounded-full text-sm sm:text-base"
                 >
-                  Go to Dashboard
+                  Dashboard
                 </Button>
               ) : (
                 <>
                   <Button 
                     variant="ghost" 
                     onClick={() => navigate("/auth")}
-                    className="text-gray-700 hover:text-purple-600"
+                    className="text-gray-700 hover:text-purple-600 text-sm sm:text-base px-2 sm:px-4"
                   >
                     Sign In
                   </Button>
                   <Button 
                     onClick={() => navigate("/auth")}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-full"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-3 sm:px-6 py-2 rounded-full text-sm sm:text-base"
                   >
-                    Get Started
+                    <span className="hidden sm:inline">Get Started</span>
+                    <span className="sm:hidden">Start</span>
                   </Button>
                 </>
               )}
@@ -121,7 +120,7 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden">
+      <section className="relative py-12 sm:py-20 lg:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <motion.div
@@ -129,35 +128,35 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <Badge className="mb-6 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-purple-200">
+              <Badge className="mb-4 sm:mb-6 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-purple-200">
                 <Sparkles className="w-4 h-4 mr-2" />
                 Connect with Wellness Professionals
               </Badge>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-4 sm:mb-6">
                 Your Wellness,{" "}
                 <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                   Connected
                 </span>
               </h1>
-              <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-4">
                 Discover trusted wellness professionals in your area. From massage therapy to personal training, 
                 find verified providers who care about your health and well-being.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
                 <Button 
                   size="lg"
                   onClick={() => navigate(user ? "/dashboard" : "/auth")}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   {user ? "Go to Dashboard" : "Start Your Journey"}
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
                 <Button 
                   variant="outline" 
                   size="lg"
-                  className="px-8 py-4 rounded-full text-lg font-semibold border-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold border-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50"
                 >
-                  <Users className="mr-2 h-5 w-5" />
+                  <Users className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   Learn More
                 </Button>
               </div>
@@ -327,23 +326,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-
-      {/* Become Provider Section - More Visible */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 1 }}
-        >
-          <Button
-            onClick={() => navigate("/auth")}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2"
-          >
-            <UserPlus className="h-5 w-5" />
-            <span className="font-semibold">Become Provider</span>
-          </Button>
-        </motion.div>
-      </div>
     </div>
   );
 };
