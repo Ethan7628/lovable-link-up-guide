@@ -42,27 +42,22 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin && process.env.NODE_ENV === 'development') {
-            return callback(null, true);
-        }
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
 
-        if (allowedOrigins.includes(origin)) {
+        if (allowedOrigins.some(allowedOrigin =>
+            origin === allowedOrigin ||
+            origin.startsWith(allowedOrigin.replace('http://', 'https://'))
+        )) {
             callback(null, true);
         } else {
             console.warn('🚫 CORS blocked:', origin);
-            callback(new Error('CORS not allowed'));
+            callback(new Error('Not allowed by CORS'));
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-        'x-auth-token',
-        'X-Requested-With',
-        'Accept',
-        'Origin'
-    ],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
     optionsSuccessStatus: 200
 }));
 
