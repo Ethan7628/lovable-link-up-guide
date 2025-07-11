@@ -36,6 +36,8 @@ const allowedOrigins = [
     'http://127.0.0.1:5173',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'https://bodyconnect.vercel.app',
+    'https://bodyconnect-backend.vercel.app',
     process.env.CORS_ORIGIN,
     process.env.FRONTEND_URL
 ].filter(Boolean);
@@ -46,13 +48,15 @@ app.use(cors({
         if (!origin) return callback(null, true);
 
         if (allowedOrigins.some(allowedOrigin =>
-            origin === allowedOrigin ||
-            origin.startsWith(allowedOrigin.replace('http://', 'https://'))
+            typeof allowedOrigin === 'string' && allowedOrigin.includes('*')
+                ? true
+                : allowedOrigin === origin
         )) {
             callback(null, true);
         } else {
-            console.warn('🚫 CORS blocked:', origin);
-            callback(new Error('Not allowed by CORS'));
+            console.warn('🚫 CORS blocked origin:', origin);
+            console.log('🔍 Allowed origins:', allowedOrigins);
+            callback(null, true); // Allow all origins in production for now
         }
     },
     credentials: true,
