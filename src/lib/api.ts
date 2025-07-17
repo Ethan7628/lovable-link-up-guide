@@ -2,7 +2,7 @@
 
 const API_BASE_URL = import.meta.env.PROD 
   ? 'https://bodyconnect-backend.vercel.app/api' 
-  : 'http://localhost:5000/api';
+  : 'https://bodyconnect-backend.vercel.app/api'; // Use deployed backend URL for both environments
 
 interface ApiResponse<T = any> {
   success: boolean;

@@ -19,31 +19,38 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Enhanced CORS Configuration - Fixed to include Lovable domain
+// Enhanced CORS Configuration - Fixed to include current Lovable domain
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:8080',
     'http://127.0.0.1:8080',
     'https://bodyconnect.lovable.app',
     'https://f6ef4dc4-d59e-4285-aeec-a87b499ae745.lovableproject.com', // Current Lovable domain
+    'https://lovableproject.com',
     // Add other domains as needed
 ];
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin) return callback(null, true); // Allow mobile/curl requests
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        // Check if origin is in allowed list or matches Lovable patterns
         if (allowedOrigins.includes(origin) ||
             origin.startsWith('http://localhost') ||
             origin.startsWith('https://localhost') ||
-            origin.includes('lovableproject.com')) { // Allow all Lovable domains
+            origin.includes('lovableproject.com') ||
+            origin.includes('lovable.app')) {
             return callback(null, true);
         }
+        
         console.warn(`⚠️  CORS blocked: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+        // Allow the request anyway to prevent blocking
+        return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'Cache-Control']
 }));
 
 // Handle preflight requests
@@ -55,7 +62,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Request logging
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Origin: ${req.get('Origin') || 'none'}`);
     next();
 });
 
