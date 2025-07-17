@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 // Connection state tracking
@@ -81,14 +82,14 @@ const connectWithRetry = async (uri, options, retryCount = 0) => {
 
 const connectDB = async () => {
   try {
-    console.log('� Initializing MongoDB connection...');
+    console.log('🔄 Initializing MongoDB connection...');
     console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
 
     if (!process.env.MONGO_URI) {
       throw new Error('MONGO_URI environment variable is not defined');
     }
 
-    // Modern MongoDB connection options
+    // Modern MongoDB connection options - optimized for Atlas
     const mongoOptions = {
       // Timeout settings
       serverSelectionTimeoutMS: 30000, // 30 seconds
@@ -105,7 +106,7 @@ const connectDB = async () => {
       retryReads: true,
       w: 'majority',
 
-      // TLS/SSL
+      // TLS/SSL - required for Atlas
       tls: true,
       tlsAllowInvalidCertificates: false,
 
@@ -114,7 +115,12 @@ const connectDB = async () => {
 
       // Other important settings
       directConnection: false,
-      appName: 'bodyconnect-backend'
+      appName: 'bodyconnect-backend',
+      
+      // Atlas specific settings
+      authSource: 'admin',
+      useNewUrlParser: true,
+      useUnifiedTopology: true
     };
 
     console.log('📍 MongoDB URI configured:', process.env.MONGO_URI.includes('mongodb+srv') ? 'MongoDB Atlas (Cloud)' : 'Local MongoDB');
@@ -140,12 +146,12 @@ const connectDB = async () => {
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('� MongoDB disconnected');
+      console.log('📡 MongoDB disconnected');
       connectionState.isConnected = false;
     });
 
     mongoose.connection.on('reconnected', () => {
-      console.log('� MongoDB reconnected');
+      console.log('📡 MongoDB reconnected');
       connectionState.isConnected = true;
       connectionState.error = null;
     });
@@ -164,11 +170,11 @@ const connectDB = async () => {
 
     console.error('💥 MongoDB Connection Failed:', err.message);
     console.error('🔧 Troubleshooting Guide:');
-    console.error('  1. Verify MongoDB cluster is running');
-    console.error('  2. Check Network Access settings');
+    console.error('  1. Verify MongoDB Atlas cluster is running');
+    console.error('  2. Check Network Access settings (whitelist your IP)');
     console.error('  3. Verify Database Access credentials');
     console.error('  4. Check MONGO_URI format:');
-    console.error('     mongodb+srv://user:pass@cluster.mongodb.net/db?retryWrites=true&w=majority');
+    console.error('     mongodb+srv://user:pass@cluster.mongodb.net/database?retryWrites=true&w=majority');
 
     if (process.env.NODE_ENV !== 'production') {
       process.exit(1);

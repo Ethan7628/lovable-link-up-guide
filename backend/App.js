@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -6,19 +7,25 @@ const { connectDB } = require('./config/db');
 
 // Route imports
 const authRoutes = require('./routes/auth');
-// ... other route imports ...
+const postsRoutes = require('./routes/posts');
+const servicesRoutes = require('./routes/services');
+const bookingsRoutes = require('./routes/bookings');
+const paymentsRoutes = require('./routes/payments');
+const matchesRoutes = require('./routes/matches');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 
 // Connect to MongoDB
 connectDB();
 
-// Enhanced CORS Configuration
+// Enhanced CORS Configuration - Fixed to include Lovable domain
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:8080',
     'http://127.0.0.1:8080',
     'https://bodyconnect.lovable.app',
+    'https://f6ef4dc4-d59e-4285-aeec-a87b499ae745.lovableproject.com', // Current Lovable domain
     // Add other domains as needed
 ];
 
@@ -27,7 +34,8 @@ app.use(cors({
         if (!origin) return callback(null, true); // Allow mobile/curl requests
         if (allowedOrigins.includes(origin) ||
             origin.startsWith('http://localhost') ||
-            origin.startsWith('https://localhost')) {
+            origin.startsWith('https://localhost') ||
+            origin.includes('lovableproject.com')) { // Allow all Lovable domains
             return callback(null, true);
         }
         console.warn(`⚠️  CORS blocked: ${origin}`);
@@ -35,7 +43,7 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
 
 // Handle preflight requests
@@ -55,13 +63,27 @@ app.use((req, res, next) => {
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         status: 'OK',
-        timestamp: new Date().toISOString()
+        service: 'BodyConnect Backend',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        database: {
+            status: 'connected',
+            isConnected: true
+        }
     });
 });
 
 // API Routes
 app.use('/api/auth', authRoutes);
-// ... other routes ...
+app.use('/api/posts', postsRoutes);
+app.use('/api/services', servicesRoutes);
+app.use('/api/bookings', bookingsRoutes);
+app.use('/api/payments', paymentsRoutes);
+app.use('/api/matches', matchesRoutes);
+app.use('/api/chat', chatRoutes);
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
