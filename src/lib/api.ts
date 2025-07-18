@@ -1,4 +1,3 @@
-
 // Enhanced API client with improved connection monitoring and error handling
 
 const API_BASE_URL = import.meta.env.PROD 
@@ -211,6 +210,10 @@ class ApiClient {
     }
   }
 
+  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET' });
+  }
+
   async uploadRequest<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
     try {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
@@ -317,6 +320,15 @@ class ApiClient {
 
   async uploadProfilePicture(formData: FormData) {
     return this.uploadRequest('/auth/upload-profile-picture', formData);
+  }
+
+  // Dashboard endpoints
+  async getDashboardStats() {
+    return this.request('/dashboard/stats');
+  }
+
+  async getDashboardActivity() {
+    return this.request('/dashboard/activity');
   }
 
   // Posts endpoints

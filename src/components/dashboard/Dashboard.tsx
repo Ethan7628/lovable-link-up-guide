@@ -36,15 +36,15 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch user stats
-        const statsResponse = await apiClient.get('/dashboard/stats');
-        if (statsResponse.data.success) {
+        // Fetch user stats using the new dedicated method
+        const statsResponse = await apiClient.getDashboardStats();
+        if (statsResponse.success) {
           setStats(statsResponse.data.stats);
         }
 
-        // Fetch recent activity
-        const activityResponse = await apiClient.get('/dashboard/activity');
-        if (activityResponse.data.success) {
+        // Fetch recent activity using the new dedicated method
+        const activityResponse = await apiClient.getDashboardActivity();
+        if (activityResponse.success) {
           setRecentActivity(activityResponse.data.activity);
         }
       } catch (error) {
