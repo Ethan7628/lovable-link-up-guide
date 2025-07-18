@@ -1,7 +1,10 @@
+
 // Enhanced API client with improved connection monitoring and error handling
 
+// Get your local IP address by running: ipconfig (Windows) or ifconfig (Mac/Linux)
+// Replace 192.168.1.xxx with your actual local IP address
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'http://localhost:5000/api' // Use local backend for both environments during development
+  ? 'http://192.168.1.100:5000/api' // Replace with your actual local IP
   : 'http://localhost:5000/api'; 
 
 interface ApiResponse<T = any> {
