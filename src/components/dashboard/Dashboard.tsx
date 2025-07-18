@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,13 +38,15 @@ const Dashboard = () => {
         // Fetch user stats using the new dedicated method
         const statsResponse = await apiClient.getDashboardStats();
         if (statsResponse.success && statsResponse.data) {
-          setStats(statsResponse.data.stats || stats);
+          const responseData = statsResponse.data as any;
+          setStats(responseData.stats || stats);
         }
 
         // Fetch recent activity using the new dedicated method
         const activityResponse = await apiClient.getDashboardActivity();
         if (activityResponse.success && activityResponse.data) {
-          setRecentActivity(activityResponse.data.activity || []);
+          const responseData = activityResponse.data as any;
+          setRecentActivity(responseData.activity || []);
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
