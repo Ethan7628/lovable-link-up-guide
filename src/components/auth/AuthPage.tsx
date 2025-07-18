@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,22 +13,18 @@ import { useMongoAuth } from '@/contexts/MongoAuthContext';
 import { apiClient } from '@/lib/api';
 import {
   Heart,
-  Sparkles,
   Users,
-  Star,
   Shield,
   Calendar,
   AlertCircle,
-  Wifi,
-  WifiOff,
-  Server,
   CheckCircle,
   Clock,
   Eye,
   EyeOff,
   Loader2,
   Database,
-  Globe
+  Globe,
+  Server
 } from 'lucide-react';
 
 const AuthPage = () => {
@@ -53,31 +49,37 @@ const AuthPage = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
+        console.log('🔍 AuthPage: Checking backend health...');
         setConnectionStatus('checking');
         const response = await apiClient.checkBackendHealth();
+        console.log('🔍 AuthPage: Health check response:', response);
 
         if (response.success && response.data) {
           setBackendHealth(response.data);
           const isHealthy = response.data.database?.status === 'connected';
           setConnectionStatus(isHealthy ? 'connected' : 'disconnected');
+          console.log('✅ AuthPage: Backend health status:', isHealthy ? 'connected' : 'disconnected');
         } else {
+          console.log('❌ AuthPage: Backend health check failed:', response.error);
           setConnectionStatus('disconnected');
           setBackendHealth(null);
         }
       } catch (error) {
-        console.log('Backend health check failed:', error);
+        console.log('❌ AuthPage: Backend health check error:', error);
         setConnectionStatus('disconnected');
         setBackendHealth(null);
       }
     };
 
-    const intervalId: NodeJS.Timeout = setInterval(checkConnection, 15000); // Check every 15 seconds
-
     // Initial check
     checkConnection();
 
+    // Check every 15 seconds
+    const intervalId = setInterval(checkConnection, 15000);
+
     // Set up real-time connection monitoring
     const handleStatusChange = (status: string) => {
+      console.log('📡 AuthPage: Connection status changed to:', status);
       setConnectionStatus(status as 'checking' | 'connected' | 'disconnected');
     };
 
@@ -122,6 +124,7 @@ const AuthPage = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔐 AuthPage: Sign in form submitted');
 
     // Validation
     const newErrors: Record<string, string> = {};
@@ -141,13 +144,18 @@ const AuthPage = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
+      console.log('❌ AuthPage: Validation errors:', newErrors);
       return;
     }
 
     setIsLoading(true);
+    console.log('📤 AuthPage: Calling signIn...');
 
     try {
-      await signIn(signInData.email, signInData.password);
+      const result = await signIn(signInData.email, signInData.password);
+      console.log('📥 AuthPage: Sign in result:', result);
+    } catch (error) {
+      console.error('❌ AuthPage: Sign in error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -155,6 +163,7 @@ const AuthPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📝 AuthPage: Sign up form submitted');
 
     // Validation
     const newErrors: Record<string, string> = {};
@@ -190,17 +199,22 @@ const AuthPage = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
+      console.log('❌ AuthPage: Validation errors:', newErrors);
       return;
     }
 
     setIsLoading(true);
+    console.log('📤 AuthPage: Calling signUp...');
 
     try {
       const userData = {
         ...signUpData,
         age: signUpData.age ? parseInt(signUpData.age) : undefined
       };
-      await signUp(userData);
+      const result = await signUp(userData);
+      console.log('📥 AuthPage: Sign up result:', result);
+    } catch (error) {
+      console.error('❌ AuthPage: Sign up error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +225,7 @@ const AuthPage = () => {
       case 'connected':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'disconnected':
-        return <WifiOff className="h-4 w-4 text-red-600" />;
+        return <AlertCircle className="h-4 w-4 text-red-600" />;
       case 'checking':
         return <Loader2 className="h-4 w-4 text-yellow-600 animate-spin" />;
       default:
@@ -222,11 +236,11 @@ const AuthPage = () => {
   const getConnectionStatusMessage = () => {
     switch (connectionStatus) {
       case 'connected':
-        return 'Connected to BodyConnect servers';
+        return 'Connected to local backend server (localhost:5000)';
       case 'disconnected':
-        return 'Cannot connect to servers. Please check your internet connection.';
+        return 'Cannot connect to backend server. Make sure your backend is running on http://localhost:5000';
       case 'checking':
-        return 'Checking connection...';
+        return 'Checking backend connection...';
       default:
         return 'Connection status unknown';
     }
@@ -326,7 +340,7 @@ const AuthPage = () => {
                   {backendHealth && (
                     <Badge variant={getConnectionStatusVariant()} className="ml-2">
                       {backendHealth.database?.isConnected ? (
-                        <><Database className="h-3 w-3 mr-1" /> DB Connected</>
+                        <><Database className="h-3 w-3 mr-1" /> MongoDB Connected</>
                       ) : (
                         <><Database className="h-3 w-3 mr-1" /> DB Issue</>
                       )}
@@ -346,7 +360,7 @@ const AuthPage = () => {
                       </span>
                       <span className="flex items-center">
                         <Globe className="h-3 w-3 mr-1" />
-                        {backendHealth.uptime ? `${Math.floor(backendHealth.uptime / 60)}m` : 'Active'}
+                        Backend Ready
                       </span>
                     </div>
                   </motion.div>
@@ -732,13 +746,13 @@ const AuthPage = () => {
           <div className="inline-flex items-center space-x-2 text-sm text-gray-600 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 shadow-sm">
             {getConnectionStatusIcon()}
             <span>
-              {connectionStatus === 'connected' && 'All Systems Operational'}
-              {connectionStatus === 'disconnected' && 'Connection Issues'}
-              {connectionStatus === 'checking' && 'Checking Status...'}
+              {connectionStatus === 'connected' && 'Backend Connected'}
+              {connectionStatus === 'disconnected' && 'Backend Disconnected'}
+              {connectionStatus === 'checking' && 'Checking Backend...'}
             </span>
             {backendHealth && connectionStatus === 'connected' && (
               <Badge variant="outline" className="ml-2 text-xs">
-                v{backendHealth.version}
+                MongoDB Ready
               </Badge>
             )}
           </div>

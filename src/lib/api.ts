@@ -1,8 +1,9 @@
+
 // Enhanced API client with improved connection monitoring and error handling
 
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://bodyconnect-backend.vercel.app/api' 
-  : 'https://bodyconnect-backend.vercel.app/api'; // Use deployed backend URL for both environments
+  ? 'http://localhost:5000/api' // Use local backend for both environments during development
+  : 'http://localhost:5000/api'; 
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -63,6 +64,8 @@ class ConnectionMonitor {
       this.connectionStatus = 'checking';
       this.notifyListeners();
 
+      console.log('🔍 Checking backend connection at:', `${API_BASE_URL}/health`);
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
@@ -78,17 +81,20 @@ class ConnectionMonitor {
 
       if (response.ok) {
         const health: HealthResponse = await response.json();
+        console.log('✅ Health check response:', health);
         this.connectionStatus = health.database?.status === 'connected' ? 'connected' : 'disconnected';
       } else {
+        console.log('❌ Health check failed with status:', response.status);
         this.connectionStatus = 'disconnected';
       }
     } catch (error) {
-      console.log('Connection check failed:', error);
+      console.log('❌ Connection check failed:', error);
       this.connectionStatus = 'disconnected';
     }
 
     this.lastChecked = new Date();
     this.notifyListeners();
+    console.log('📊 Connection status updated to:', this.connectionStatus);
     return this.connectionStatus === 'connected';
   }
 }
@@ -114,6 +120,8 @@ class ApiClient {
   }
 
   private async handleNetworkError(error: Error): Promise<string> {
+    console.log('🔍 Handling network error:', error);
+    
     // Check if it's a network error
     if (error instanceof TypeError && (
       error.message.includes('fetch') || 
@@ -123,7 +131,7 @@ class ApiClient {
       // Try to determine if backend is reachable
       const isConnected = await this.connectionMonitor.checkConnection(true);
       if (!isConnected) {
-        return 'Cannot connect to BodyConnect servers. Please check your internet connection and try again.';
+        return 'Cannot connect to local backend server. Make sure your backend is running on http://localhost:5000';
       }
       return 'Network error occurred. Please try again.';
     }
@@ -137,13 +145,14 @@ class ApiClient {
 
   async request<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     try {
-      console.log(`🌐 Making API request to: ${API_BASE_URL}${endpoint}`);
+      const fullUrl = `${API_BASE_URL}${endpoint}`;
+      console.log(`🌐 Making API request to: ${fullUrl}`);
       
       // Set up request timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await fetch(fullUrl, {
         ...options,
         signal: controller.signal,
         headers: {
@@ -157,9 +166,16 @@ class ApiClient {
       console.log(`📡 API response status: ${response.status} for ${endpoint}`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ 
-          msg: `HTTP ${response.status} - ${response.statusText}` 
-        }));
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { 
+            msg: `HTTP ${response.status} - ${response.statusText}` 
+          };
+        }
+        
+        console.log('❌ API Error Response:', errorData);
         
         // Handle specific HTTP status codes
         if (response.status === 401) {
@@ -180,7 +196,7 @@ class ApiClient {
       }
 
       const data = await response.json();
-      console.log('✅ API response received for:', endpoint);
+      console.log('✅ API response received for:', endpoint, data);
 
       return { success: true, data };
     } catch (error) {
@@ -197,13 +213,14 @@ class ApiClient {
 
   async uploadRequest<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
     try {
-      console.log(`📤 Making upload request to: ${API_BASE_URL}${endpoint}`);
+      const fullUrl = `${API_BASE_URL}${endpoint}`;
+      console.log(`📤 Making upload request to: ${fullUrl}`);
       
       // Set up request timeout (longer for uploads)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for uploads
 
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await fetch(fullUrl, {
         method: 'POST',
         signal: controller.signal,
         headers: this.getMultipartHeaders(),

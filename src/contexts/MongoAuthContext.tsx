@@ -73,11 +73,13 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       console.log('MongoAuth: Validating existing token');
       const response = await apiClient.getProfile();
+      console.log('MongoAuth: Profile response:', response);
+      
       if (response.success && response.data) {
         console.log('MongoAuth: User authenticated', response.data);
         setUser(response.data as User);
       } else {
-        console.log('MongoAuth: Invalid token, clearing storage');
+        console.log('MongoAuth: Invalid token, clearing storage. Error:', response.error);
         localStorage.removeItem('token');
         setUser(null);
       }
@@ -103,7 +105,9 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     console.log('MongoAuth: Attempting sign up for:', userData.email);
     
     try {
+      console.log('MongoAuth: Sending registration request...');
       const response = await apiClient.register(userData);
+      console.log('MongoAuth: Registration response:', response);
       
       if (response.success && response.data) {
         console.log('MongoAuth: Sign up successful', response.data);
@@ -112,9 +116,11 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         // Store token and user data
         if (authData.token) {
+          console.log('MongoAuth: Storing auth token');
           localStorage.setItem('token', authData.token);
         }
         if (authData.user) {
+          console.log('MongoAuth: Setting user data');
           setUser(authData.user);
         }
         
@@ -126,9 +132,10 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return { error: null };
       } else {
         console.error('MongoAuth: Sign up failed', response.error);
+        const errorMessage = response.error || 'Registration failed. Please check your connection and try again.';
         toast({
           title: "Sign up failed",
-          description: response.error || 'Registration failed. Please check your connection and try again.',
+          description: errorMessage,
           variant: "destructive"
         });
         return { error: response.error };
@@ -149,7 +156,9 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     console.log('MongoAuth: Attempting sign in for:', email);
     
     try {
+      console.log('MongoAuth: Sending login request...');
       const response = await apiClient.login(email, password);
+      console.log('MongoAuth: Login response:', response);
       
       if (response.success && response.data) {
         console.log('MongoAuth: Sign in successful', response.data);
@@ -158,9 +167,11 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         // Store token and user data
         if (authData.token) {
+          console.log('MongoAuth: Storing auth token');
           localStorage.setItem('token', authData.token);
         }
         if (authData.user) {
+          console.log('MongoAuth: Setting user data');
           setUser(authData.user);
         }
         
@@ -172,9 +183,10 @@ export const MongoAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return { error: null };
       } else {
         console.error('MongoAuth: Sign in failed', response.error);
+        const errorMessage = response.error || 'Invalid credentials or server connection issue';
         toast({
           title: "Sign in failed",
-          description: response.error || 'Invalid credentials or server connection issue',
+          description: errorMessage,
           variant: "destructive"
         });
         return { error: response.error };
