@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 // Connection state tracking
@@ -13,7 +12,7 @@ let connectionState = {
 // Connection retry configuration
 const RETRY_CONFIG = {
   maxRetries: 5,
-  initialRetryDelay: 2000, // 2 seconds
+  initialRetryDelay: 2000,
   backoffMultiplier: 1.5
 };
 
@@ -89,38 +88,28 @@ const connectDB = async () => {
       throw new Error('MONGO_URI environment variable is not defined');
     }
 
-    // Modern MongoDB connection options - optimized for Atlas
+    // MongoDB connection options optimized for Atlas
     const mongoOptions = {
       // Timeout settings
-      serverSelectionTimeoutMS: 30000, // 30 seconds
-      connectTimeoutMS: 30000, // 30 seconds
-      socketTimeoutMS: 45000, // 45 seconds
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
 
       // Connection pool settings
       maxPoolSize: process.env.NODE_ENV === 'production' ? 10 : 5,
       minPoolSize: 1,
       maxIdleTimeMS: 30000,
 
-      // Read/write preferences
+      // Retry settings
       retryWrites: true,
       retryReads: true,
       w: 'majority',
 
-      // TLS/SSL - required for Atlas
-      tls: true,
-      tlsAllowInvalidCertificates: false,
-
-      // Heartbeat and monitoring
-      heartbeatFrequencyMS: 10000,
-
-      // Other important settings
-      directConnection: false,
-      appName: 'bodyconnect-backend',
-      
-      // Atlas specific settings
-      authSource: 'admin',
+      // Other settings
       useNewUrlParser: true,
-      useUnifiedTopology: true
+      useUnifiedTopology: true,
+      bufferCommands: false,
+      bufferMaxEntries: 0
     };
 
     console.log('📍 MongoDB URI configured:', process.env.MONGO_URI.includes('mongodb+srv') ? 'MongoDB Atlas (Cloud)' : 'Local MongoDB');
@@ -134,7 +123,7 @@ const connectDB = async () => {
 
     // Connection event handlers
     mongoose.connection.on('connected', () => {
-      console.log('📡 MongoDB connected');
+      console.log('📡 Mongoose connected to DB');
       connectionState.isConnected = true;
       connectionState.error = null;
     });
@@ -146,12 +135,12 @@ const connectDB = async () => {
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('📡 MongoDB disconnected');
+      console.log('📡 Mongoose disconnected');
       connectionState.isConnected = false;
     });
 
     mongoose.connection.on('reconnected', () => {
-      console.log('📡 MongoDB reconnected');
+      console.log('📡 Mongoose reconnected');
       connectionState.isConnected = true;
       connectionState.error = null;
     });
@@ -173,14 +162,14 @@ const connectDB = async () => {
     console.error('  1. Verify MongoDB Atlas cluster is running');
     console.error('  2. Check Network Access settings (whitelist your IP)');
     console.error('  3. Verify Database Access credentials');
-    console.error('  4. Check MONGO_URI format:');
-    console.error('     mongodb+srv://user:pass@cluster.mongodb.net/database?retryWrites=true&w=majority');
+    console.error('  4. Check MONGO_URI format');
 
     if (process.env.NODE_ENV !== 'production') {
+      console.error('🛑 Exiting due to connection failure...');
       process.exit(1);
     }
 
-    throw err; // Rethrow for production environments to handle retries
+    throw err;
   }
 };
 
