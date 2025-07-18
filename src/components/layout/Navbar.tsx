@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,8 +18,6 @@ import {
   Settings, 
   Bell, 
   Heart, 
-  Wifi, 
-  WifiOff, 
   Menu,
   X,
   Home,
@@ -31,31 +29,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import { apiClient } from '@/lib/api';
 
 const Navbar = () => {
   const { user, signOut } = useMongoAuth();
   const location = useLocation();
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
   const [notificationCount, setNotificationCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Monitor connection status
-  useEffect(() => {
-    const handleStatusChange = (status: string) => {
-      setConnectionStatus(status as any);
-    };
-
-    // Set initial status
-    setConnectionStatus(apiClient.getConnectionStatus() as any);
-    
-    // Listen for changes
-    apiClient.onConnectionStatusChange(handleStatusChange);
-
-    return () => {
-      apiClient.offConnectionStatusChange(handleStatusChange);
-    };
-  }, []);
 
   // Get API base URL with environment awareness
   const getImageUrl = (imagePath: string) => {
@@ -84,35 +63,6 @@ const Navbar = () => {
     return location.pathname === path;
   };
 
-  const ConnectionIndicator = () => (
-    <motion.div
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      className="flex items-center gap-2"
-    >
-      {connectionStatus === 'connected' ? (
-        <div className="flex items-center gap-1 text-green-600">
-          <Wifi className="h-3 w-3" />
-          <span className="text-xs font-medium hidden sm:inline">Online</span>
-        </div>
-      ) : connectionStatus === 'disconnected' ? (
-        <div className="flex items-center gap-1 text-red-600">
-          <WifiOff className="h-3 w-3" />
-          <span className="text-xs font-medium hidden sm:inline">Offline</span>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1 text-yellow-600">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="h-3 w-3 border border-current border-t-transparent rounded-full"
-          />
-          <span className="text-xs font-medium hidden sm:inline">Checking</span>
-        </div>
-      )}
-    </motion.div>
-  );
-
   return (
     <>
       <motion.nav
@@ -137,7 +87,6 @@ const Navbar = () => {
                   <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                     BodyConnect
                   </h1>
-                  <ConnectionIndicator />
                 </div>
               </motion.div>
             </Link>
@@ -169,11 +118,6 @@ const Navbar = () => {
 
             {/* Right side actions */}
             <div className="flex items-center space-x-3">
-              {/* Connection Status (Mobile) */}
-              <div className="sm:hidden">
-                <ConnectionIndicator />
-              </div>
-
               {user ? (
                 <div className="flex items-center gap-3">
                   {/* Notifications */}
