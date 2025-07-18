@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,43 +13,19 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Heart, 
-  ArrowLeft, 
-  User, 
-  Bell, 
-  Shield, 
-  CreditCard, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Camera,
-  Save,
-  Trash2,
-  Upload,
-  X,
-  Eye,
-  EyeOff,
-  Lock,
-  Smartphone,
-  Globe,
-  Users,
-  MessageSquare,
-  Image,
-  Video,
-  Download,
-  HelpCircle,
-  LogOut,
-  AlertTriangle,
-  CheckCircle
-} from 'lucide-react';
+import { Heart, ArrowLeft, User, Bell, Shield, CreditCard, MapPin, Phone, Mail, Camera, Save, Trash2, Upload, X, Eye, EyeOff, Lock, Smartphone, Globe, Users, MessageSquare, Image, Video, Download, HelpCircle, LogOut, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
 const SettingsPage = () => {
-  const { user, updateProfile, uploadProfilePicture, signOut } = useMongoAuth();
-  const { toast } = useToast();
+  const {
+    user,
+    updateProfile,
+    uploadProfilePicture,
+    signOut
+  } = useMongoAuth();
+  const {
+    toast
+  } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -59,12 +34,11 @@ const SettingsPage = () => {
     bio: user?.bio || '',
     role: user?.role || 'buyer'
   });
-  
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [updating, setUpdating] = useState(false);
-  
+
   // Notification settings
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -78,7 +52,7 @@ const SettingsPage = () => {
     bookings: true,
     promotions: false
   });
-  
+
   // Privacy settings
   const [privacy, setPrivacy] = useState({
     profileVisibility: 'public',
@@ -108,44 +82,38 @@ const SettingsPage = () => {
     downloadQuality: 'high',
     storageLimit: '1GB'
   });
-
   const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
       const maxSize = 5 * 1024 * 1024; // 5MB
-      
+
       if (!validTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
           description: "Only JPEG, PNG, and GIF files are allowed",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-      
       if (file.size > maxSize) {
         toast({
           title: "File too large",
           description: "Image must be smaller than 5MB",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       setSelectedImage(file);
-      
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         setImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
-
   const handleImageUpload = async () => {
     if (!selectedImage) return;
-    
     setUploading(true);
     try {
       const result = await uploadProfilePicture(selectedImage);
@@ -162,7 +130,6 @@ const SettingsPage = () => {
       setUploading(false);
     }
   };
-
   const clearImageSelection = () => {
     setSelectedImage(null);
     setImagePreview(null);
@@ -170,7 +137,6 @@ const SettingsPage = () => {
       fileInputRef.current.value = '';
     }
   };
-
   const handleProfileUpdate = async () => {
     setUpdating(true);
     try {
@@ -181,70 +147,53 @@ const SettingsPage = () => {
       setUpdating(false);
     }
   };
-
   const saveSettings = (settingType: string) => {
     toast({
       title: "Settings Updated",
-      description: `Your ${settingType} settings have been saved.`,
+      description: `Your ${settingType} settings have been saved.`
     });
   };
-
   const handleDeleteAccount = async () => {
     if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       try {
         toast({
           title: "Account Deleted",
-          description: "Your account has been deleted successfully.",
+          description: "Your account has been deleted successfully."
         });
         signOut();
       } catch (error) {
         toast({
           title: "Error",
           description: "Failed to delete account. Please try again.",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     }
   };
-
   const exportData = () => {
     toast({
       title: "Data Export Started",
-      description: "Your data export has been started. You'll receive an email when it's ready.",
+      description: "Your data export has been started. You'll receive an email when it's ready."
     });
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
+  return <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard" className="flex items-center text-purple-600 hover:text-purple-700 transition-colors">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                <span>Back</span>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <Heart className="h-8 w-8 text-purple-600" />
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  BodyConnect
-                </h1>
-              </div>
-            </div>
-            <div className="text-sm text-gray-600">
-              Settings
-            </div>
-          </div>
+          
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.5
+      }}>
           <Tabs defaultValue="profile" className="space-y-6">
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="profile" className="flex items-center gap-1 text-xs">
@@ -283,62 +232,33 @@ const SettingsPage = () => {
                   {/* Profile Picture */}
                   <div className="flex flex-col items-center space-y-4">
                     <Avatar className="h-32 w-32 border-4 border-purple-200">
-                      <AvatarImage 
-                        src={imagePreview || (user?.profilePicture ? `http://localhost:5000${user.profilePicture}` : "")} 
-                        alt={profileData.name} 
-                      />
+                      <AvatarImage src={imagePreview || (user?.profilePicture ? `http://localhost:5000${user.profilePicture}` : "")} alt={profileData.name} />
                       <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-4xl">
                         {profileData.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     
                     <div className="space-y-2 text-center">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageSelection}
-                        className="hidden"
-                      />
+                      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelection} className="hidden" />
                       
-                      {selectedImage ? (
-                        <div className="flex items-center space-x-2 justify-center">
-                          <Button 
-                            onClick={handleImageUpload}
-                            disabled={uploading}
-                            className="bg-gradient-to-r from-purple-600 to-pink-600"
-                          >
-                            {uploading ? (
-                              <>
+                      {selectedImage ? <div className="flex items-center space-x-2 justify-center">
+                          <Button onClick={handleImageUpload} disabled={uploading} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                            {uploading ? <>
                                 <Upload className="h-4 w-4 mr-2 animate-spin" />
                                 Uploading...
-                              </>
-                            ) : (
-                              <>
+                              </> : <>
                                 <Upload className="h-4 w-4 mr-2" />
                                 Upload Photo
-                              </>
-                            )}
+                              </>}
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={clearImageSelection}
-                            disabled={uploading}
-                          >
+                          <Button variant="outline" onClick={clearImageSelection} disabled={uploading}>
                             <X className="h-4 w-4 mr-2" />
                             Cancel
                           </Button>
-                        </div>
-                      ) : (
-                        <Button 
-                          variant="outline" 
-                          onClick={() => fileInputRef.current?.click()}
-                          className="flex items-center gap-2 justify-center"
-                        >
+                        </div> : <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 justify-center">
                           <Camera className="h-4 w-4" />
                           Change Photo
-                        </Button>
-                      )}
+                        </Button>}
                     </div>
                     
                     <Badge variant="secondary" className="text-xs">
@@ -350,74 +270,53 @@ const SettingsPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={profileData.name}
-                        onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                        placeholder="Enter your full name"
-                      />
+                      <Input id="name" value={profileData.name} onChange={e => setProfileData({
+                      ...profileData,
+                      name: e.target.value
+                    })} placeholder="Enter your full name" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={profileData.email}
-                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                        placeholder="Enter your email"
-                      />
+                      <Input id="email" type="email" value={profileData.email} onChange={e => setProfileData({
+                      ...profileData,
+                      email: e.target.value
+                    })} placeholder="Enter your email" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={profileData.phone}
-                        onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                        placeholder="Enter your phone number"
-                      />
+                      <Input id="phone" type="tel" value={profileData.phone} onChange={e => setProfileData({
+                      ...profileData,
+                      phone: e.target.value
+                    })} placeholder="Enter your phone number" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        value={profileData.location}
-                        onChange={(e) => setProfileData({...profileData, location: e.target.value})}
-                        placeholder="Enter your location"
-                      />
+                      <Input id="location" value={profileData.location} onChange={e => setProfileData({
+                      ...profileData,
+                      location: e.target.value
+                    })} placeholder="Enter your location" />
                     </div>
                   </div>
 
                   {/* Bio */}
                   <div className="space-y-2">
                     <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={profileData.bio}
-                      onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
-                      placeholder="Tell us about yourself..."
-                      rows={4}
-                    />
+                    <Textarea id="bio" value={profileData.bio} onChange={e => setProfileData({
+                    ...profileData,
+                    bio: e.target.value
+                  })} placeholder="Tell us about yourself..." rows={4} />
                   </div>
 
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline">Cancel</Button>
-                    <Button 
-                      onClick={handleProfileUpdate} 
-                      disabled={updating}
-                      className="bg-gradient-to-r from-purple-600 to-pink-600"
-                    >
-                      {updating ? (
-                        <>
+                    <Button onClick={handleProfileUpdate} disabled={updating} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                      {updating ? <>
                           <Save className="h-4 w-4 mr-2 animate-spin" />
                           Saving...
-                        </>
-                      ) : (
-                        <>
+                        </> : <>
                           <Save className="h-4 w-4 mr-2" />
                           Save Changes
-                        </>
-                      )}
+                        </>}
                     </Button>
                   </div>
                 </CardContent>
@@ -436,25 +335,44 @@ const SettingsPage = () => {
                     <div>
                       <h3 className="text-lg font-semibold mb-4">Push Notifications</h3>
                       <div className="space-y-4">
-                        {[
-                          { key: 'pushNotifications', label: 'Enable Push Notifications', desc: 'Receive notifications on your device' },
-                          { key: 'newFollowers', label: 'New Followers', desc: 'When someone follows you' },
-                          { key: 'likes', label: 'Likes', desc: 'When someone likes your posts' },
-                          { key: 'comments', label: 'Comments', desc: 'When someone comments on your posts' },
-                          { key: 'mentions', label: 'Mentions', desc: 'When someone mentions you' },
-                          { key: 'bookings', label: 'Bookings', desc: 'Booking confirmations and updates' }
-                        ].map(({ key, label, desc }) => (
-                          <div key={key} className="flex items-center justify-between">
+                        {[{
+                        key: 'pushNotifications',
+                        label: 'Enable Push Notifications',
+                        desc: 'Receive notifications on your device'
+                      }, {
+                        key: 'newFollowers',
+                        label: 'New Followers',
+                        desc: 'When someone follows you'
+                      }, {
+                        key: 'likes',
+                        label: 'Likes',
+                        desc: 'When someone likes your posts'
+                      }, {
+                        key: 'comments',
+                        label: 'Comments',
+                        desc: 'When someone comments on your posts'
+                      }, {
+                        key: 'mentions',
+                        label: 'Mentions',
+                        desc: 'When someone mentions you'
+                      }, {
+                        key: 'bookings',
+                        label: 'Bookings',
+                        desc: 'Booking confirmations and updates'
+                      }].map(({
+                        key,
+                        label,
+                        desc
+                      }) => <div key={key} className="flex items-center justify-between">
                             <div className="space-y-0.5">
                               <Label className="text-base">{label}</Label>
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
-                            <Switch
-                              checked={Boolean(notifications[key as keyof typeof notifications])}
-                              onCheckedChange={(checked) => setNotifications({...notifications, [key]: checked})}
-                            />
-                          </div>
-                        ))}
+                            <Switch checked={Boolean(notifications[key as keyof typeof notifications])} onCheckedChange={checked => setNotifications({
+                          ...notifications,
+                          [key]: checked
+                        })} />
+                          </div>)}
                       </div>
                     </div>
 
@@ -464,22 +382,32 @@ const SettingsPage = () => {
                     <div>
                       <h3 className="text-lg font-semibold mb-4">Email Notifications</h3>
                       <div className="space-y-4">
-                        {[
-                          { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive email notifications' },
-                          { key: 'marketingEmails', label: 'Marketing Emails', desc: 'Promotional content and updates' },
-                          { key: 'promotions', label: 'Special Offers', desc: 'Exclusive deals and promotions' }
-                        ].map(({ key, label, desc }) => (
-                          <div key={key} className="flex items-center justify-between">
+                        {[{
+                        key: 'emailNotifications',
+                        label: 'Email Notifications',
+                        desc: 'Receive email notifications'
+                      }, {
+                        key: 'marketingEmails',
+                        label: 'Marketing Emails',
+                        desc: 'Promotional content and updates'
+                      }, {
+                        key: 'promotions',
+                        label: 'Special Offers',
+                        desc: 'Exclusive deals and promotions'
+                      }].map(({
+                        key,
+                        label,
+                        desc
+                      }) => <div key={key} className="flex items-center justify-between">
                             <div className="space-y-0.5">
                               <Label className="text-base">{label}</Label>
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
-                            <Switch
-                              checked={Boolean(notifications[key as keyof typeof notifications])}
-                              onCheckedChange={(checked) => setNotifications({...notifications, [key]: checked})}
-                            />
-                          </div>
-                        ))}
+                            <Switch checked={Boolean(notifications[key as keyof typeof notifications])} onCheckedChange={checked => setNotifications({
+                          ...notifications,
+                          [key]: checked
+                        })} />
+                          </div>)}
                       </div>
                     </div>
 
@@ -493,19 +421,16 @@ const SettingsPage = () => {
                           <Label className="text-base">SMS Alerts</Label>
                           <p className="text-sm text-gray-500">Critical updates via SMS</p>
                         </div>
-                        <Switch
-                          checked={notifications.smsNotifications}
-                          onCheckedChange={(checked) => setNotifications({...notifications, smsNotifications: checked})}
-                        />
+                        <Switch checked={notifications.smsNotifications} onCheckedChange={checked => setNotifications({
+                        ...notifications,
+                        smsNotifications: checked
+                      })} />
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex justify-end">
-                    <Button 
-                      onClick={() => saveSettings('notification')} 
-                      className="bg-gradient-to-r from-purple-600 to-pink-600"
-                    >
+                    <Button onClick={() => saveSettings('notification')} className="bg-gradient-to-r from-purple-600 to-pink-600">
                       <Save className="h-4 w-4 mr-2" />
                       Save Preferences
                     </Button>
@@ -528,7 +453,10 @@ const SettingsPage = () => {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="visibility">Profile Visibility</Label>
-                          <Select value={privacy.profileVisibility} onValueChange={(value) => setPrivacy({...privacy, profileVisibility: value})}>
+                          <Select value={privacy.profileVisibility} onValueChange={value => setPrivacy({
+                          ...privacy,
+                          profileVisibility: value
+                        })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select visibility" />
                             </SelectTrigger>
@@ -555,24 +483,40 @@ const SettingsPage = () => {
                           </Select>
                         </div>
 
-                        {[
-                          { key: 'showOnlineStatus', label: 'Show Online Status', desc: 'Let others see when you\'re active' },
-                          { key: 'showEmail', label: 'Show Email', desc: 'Display email on your profile' },
-                          { key: 'showPhone', label: 'Show Phone', desc: 'Display phone number on your profile' },
-                          { key: 'searchable', label: 'Searchable Profile', desc: 'Allow others to find you in search' },
-                          { key: 'showActivity', label: 'Show Activity', desc: 'Show your recent activity to others' }
-                        ].map(({ key, label, desc }) => (
-                          <div key={key} className="flex items-center justify-between">
+                        {[{
+                        key: 'showOnlineStatus',
+                        label: 'Show Online Status',
+                        desc: 'Let others see when you\'re active'
+                      }, {
+                        key: 'showEmail',
+                        label: 'Show Email',
+                        desc: 'Display email on your profile'
+                      }, {
+                        key: 'showPhone',
+                        label: 'Show Phone',
+                        desc: 'Display phone number on your profile'
+                      }, {
+                        key: 'searchable',
+                        label: 'Searchable Profile',
+                        desc: 'Allow others to find you in search'
+                      }, {
+                        key: 'showActivity',
+                        label: 'Show Activity',
+                        desc: 'Show your recent activity to others'
+                      }].map(({
+                        key,
+                        label,
+                        desc
+                      }) => <div key={key} className="flex items-center justify-between">
                             <div className="space-y-0.5">
                               <Label className="text-base">{label}</Label>
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
-                            <Switch
-                              checked={Boolean(privacy[key as keyof typeof privacy])}
-                              onCheckedChange={(checked) => setPrivacy({...privacy, [key]: checked})}
-                            />
-                          </div>
-                        ))}
+                            <Switch checked={Boolean(privacy[key as keyof typeof privacy])} onCheckedChange={checked => setPrivacy({
+                          ...privacy,
+                          [key]: checked
+                        })} />
+                          </div>)}
                       </div>
                     </div>
 
@@ -582,30 +526,34 @@ const SettingsPage = () => {
                     <div>
                       <h3 className="text-lg font-semibold mb-4">Communication</h3>
                       <div className="space-y-4">
-                        {[
-                          { key: 'allowDirectMessages', label: 'Direct Messages', desc: 'Allow others to send you messages' },
-                          { key: 'allowTagging', label: 'Allow Tagging', desc: 'Let others tag you in posts and comments' }
-                        ].map(({ key, label, desc }) => (
-                          <div key={key} className="flex items-center justify-between">
+                        {[{
+                        key: 'allowDirectMessages',
+                        label: 'Direct Messages',
+                        desc: 'Allow others to send you messages'
+                      }, {
+                        key: 'allowTagging',
+                        label: 'Allow Tagging',
+                        desc: 'Let others tag you in posts and comments'
+                      }].map(({
+                        key,
+                        label,
+                        desc
+                      }) => <div key={key} className="flex items-center justify-between">
                             <div className="space-y-0.5">
                               <Label className="text-base">{label}</Label>
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
-                            <Switch
-                              checked={Boolean(privacy[key as keyof typeof privacy])}
-                              onCheckedChange={(checked) => setPrivacy({...privacy, [key]: checked})}
-                            />
-                          </div>
-                        ))}
+                            <Switch checked={Boolean(privacy[key as keyof typeof privacy])} onCheckedChange={checked => setPrivacy({
+                          ...privacy,
+                          [key]: checked
+                        })} />
+                          </div>)}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-end">
-                    <Button 
-                      onClick={() => saveSettings('privacy')} 
-                      className="bg-gradient-to-r from-purple-600 to-pink-600"
-                    >
+                    <Button onClick={() => saveSettings('privacy')} className="bg-gradient-to-r from-purple-600 to-pink-600">
                       <Save className="h-4 w-4 mr-2" />
                       Save Settings
                     </Button>
@@ -631,10 +579,10 @@ const SettingsPage = () => {
                           <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={security.twoFactorEnabled}
-                            onCheckedChange={(checked) => setSecurity({...security, twoFactorEnabled: checked})}
-                          />
+                          <Switch checked={security.twoFactorEnabled} onCheckedChange={checked => setSecurity({
+                          ...security,
+                          twoFactorEnabled: checked
+                        })} />
                           <Button variant="outline" size="sm">
                             Setup
                           </Button>
@@ -646,25 +594,35 @@ const SettingsPage = () => {
                     <div>
                       <h3 className="text-lg font-semibold mb-4">Login Security</h3>
                       <div className="space-y-4">
-                        {[
-                          { key: 'loginAlerts', label: 'Login Alerts', desc: 'Get notified of new logins to your account' },
-                          { key: 'deviceManagement', label: 'Device Management', desc: 'Monitor devices that have access to your account' }
-                        ].map(({ key, label, desc }) => (
-                          <div key={key} className="flex items-center justify-between">
+                        {[{
+                        key: 'loginAlerts',
+                        label: 'Login Alerts',
+                        desc: 'Get notified of new logins to your account'
+                      }, {
+                        key: 'deviceManagement',
+                        label: 'Device Management',
+                        desc: 'Monitor devices that have access to your account'
+                      }].map(({
+                        key,
+                        label,
+                        desc
+                      }) => <div key={key} className="flex items-center justify-between">
                             <div className="space-y-0.5">
                               <Label className="text-base">{label}</Label>
                               <p className="text-sm text-gray-500">{desc}</p>
                             </div>
-                            <Switch
-                              checked={Boolean(security[key as keyof typeof security])}
-                              onCheckedChange={(checked) => setSecurity({...security, [key]: checked})}
-                            />
-                          </div>
-                        ))}
+                            <Switch checked={Boolean(security[key as keyof typeof security])} onCheckedChange={checked => setSecurity({
+                          ...security,
+                          [key]: checked
+                        })} />
+                          </div>)}
 
                         <div className="space-y-2">
                           <Label htmlFor="sessionTimeout">Session Timeout</Label>
-                          <Select value={security.sessionTimeout} onValueChange={(value) => setSecurity({...security, sessionTimeout: value})}>
+                          <Select value={security.sessionTimeout} onValueChange={value => setSecurity({
+                          ...security,
+                          sessionTimeout: value
+                        })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select timeout" />
                             </SelectTrigger>
@@ -693,20 +651,17 @@ const SettingsPage = () => {
                             <Label className="text-base">Regular Password Changes</Label>
                             <p className="text-sm text-gray-500">Require password change every 90 days</p>
                           </div>
-                          <Switch
-                            checked={security.passwordChangeRequired}
-                            onCheckedChange={(checked) => setSecurity({...security, passwordChangeRequired: checked})}
-                          />
+                          <Switch checked={security.passwordChangeRequired} onCheckedChange={checked => setSecurity({
+                          ...security,
+                          passwordChangeRequired: checked
+                        })} />
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-end">
-                    <Button 
-                      onClick={() => saveSettings('security')} 
-                      className="bg-gradient-to-r from-purple-600 to-pink-600"
-                    >
+                    <Button onClick={() => saveSettings('security')} className="bg-gradient-to-r from-purple-600 to-pink-600">
                       <Save className="h-4 w-4 mr-2" />
                       Save Settings
                     </Button>
@@ -732,15 +687,18 @@ const SettingsPage = () => {
                             <Label className="text-base">Auto-play Videos</Label>
                             <p className="text-sm text-gray-500">Automatically play videos in your feed</p>
                           </div>
-                          <Switch
-                            checked={content.autoPlayVideos}
-                            onCheckedChange={(checked) => setContent({...content, autoPlayVideos: checked})}
-                          />
+                          <Switch checked={content.autoPlayVideos} onCheckedChange={checked => setContent({
+                          ...content,
+                          autoPlayVideos: checked
+                        })} />
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="dataUsage">Data Usage</Label>
-                          <Select value={content.dataUsage} onValueChange={(value) => setContent({...content, dataUsage: value})}>
+                          <Select value={content.dataUsage} onValueChange={value => setContent({
+                          ...content,
+                          dataUsage: value
+                        })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select data usage" />
                             </SelectTrigger>
@@ -755,7 +713,10 @@ const SettingsPage = () => {
 
                         <div className="space-y-2">
                           <Label htmlFor="downloadQuality">Download Quality</Label>
-                          <Select value={content.downloadQuality} onValueChange={(value) => setContent({...content, downloadQuality: value})}>
+                          <Select value={content.downloadQuality} onValueChange={value => setContent({
+                          ...content,
+                          downloadQuality: value
+                        })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select quality" />
                             </SelectTrigger>
@@ -781,10 +742,10 @@ const SettingsPage = () => {
                             <Label className="text-base">Sensitive Content</Label>
                             <p className="text-sm text-gray-500">Show posts that might contain sensitive content</p>
                           </div>
-                          <Switch
-                            checked={content.showSensitiveContent}
-                            onCheckedChange={(checked) => setContent({...content, showSensitiveContent: checked})}
-                          />
+                          <Switch checked={content.showSensitiveContent} onCheckedChange={checked => setContent({
+                          ...content,
+                          showSensitiveContent: checked
+                        })} />
                         </div>
                       </div>
                     </div>
@@ -797,7 +758,10 @@ const SettingsPage = () => {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="storageLimit">Storage Limit</Label>
-                          <Select value={content.storageLimit} onValueChange={(value) => setContent({...content, storageLimit: value})}>
+                          <Select value={content.storageLimit} onValueChange={value => setContent({
+                          ...content,
+                          storageLimit: value
+                        })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select limit" />
                             </SelectTrigger>
@@ -820,10 +784,7 @@ const SettingsPage = () => {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button 
-                      onClick={() => saveSettings('content')} 
-                      className="bg-gradient-to-r from-purple-600 to-pink-600"
-                    >
+                    <Button onClick={() => saveSettings('content')} className="bg-gradient-to-r from-purple-600 to-pink-600">
                       <Save className="h-4 w-4 mr-2" />
                       Save Settings
                     </Button>
@@ -913,11 +874,7 @@ const SettingsPage = () => {
                           <h3 className="font-medium text-gray-900">Delete Account</h3>
                           <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
                         </div>
-                        <Button 
-                          variant="destructive" 
-                          onClick={handleDeleteAccount}
-                          className="flex items-center gap-2"
-                        >
+                        <Button variant="destructive" onClick={handleDeleteAccount} className="flex items-center gap-2">
                           <Trash2 className="h-4 w-4" />
                           Delete Account
                         </Button>
@@ -930,8 +887,6 @@ const SettingsPage = () => {
           </Tabs>
         </motion.div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default SettingsPage;
