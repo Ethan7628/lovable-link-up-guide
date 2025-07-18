@@ -38,14 +38,14 @@ const Dashboard = () => {
       try {
         // Fetch user stats using the new dedicated method
         const statsResponse = await apiClient.getDashboardStats();
-        if (statsResponse.success) {
-          setStats(statsResponse.data.stats);
+        if (statsResponse.success && statsResponse.data) {
+          setStats(statsResponse.data.stats || stats);
         }
 
         // Fetch recent activity using the new dedicated method
         const activityResponse = await apiClient.getDashboardActivity();
-        if (activityResponse.success) {
-          setRecentActivity(activityResponse.data.activity);
+        if (activityResponse.success && activityResponse.data) {
+          setRecentActivity(activityResponse.data.activity || []);
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -115,7 +115,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
+        {/* Welcome Section - Simplified without duplicate header elements */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
