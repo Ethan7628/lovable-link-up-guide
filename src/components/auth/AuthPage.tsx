@@ -11,16 +11,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useMongoAuth } from '@/contexts/MongoAuthContext';
 import { apiClient } from '@/lib/api';
-import { 
-  Heart, 
-  Sparkles, 
-  Users, 
-  Star, 
-  Shield, 
-  Calendar, 
-  AlertCircle, 
-  Wifi, 
-  WifiOff, 
+import {
+  Heart,
+  Sparkles,
+  Users,
+  Star,
+  Shield,
+  Calendar,
+  AlertCircle,
+  Wifi,
+  WifiOff,
   Server,
   CheckCircle,
   Clock,
@@ -35,19 +35,27 @@ const AuthPage = () => {
   const { signIn, signUp } = useMongoAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
-  const [backendHealth, setBackendHealth] = useState<any>(null);
+  interface BackendHealth {
+    database?: {
+      status?: string;
+      isConnected?: boolean;
+    };
+    environment?: string;
+    uptime?: number;
+    version?: string;
+  }
+
+  const [backendHealth, setBackendHealth] = useState<BackendHealth | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
   // Enhanced connection monitoring
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
     const checkConnection = async () => {
       try {
         setConnectionStatus('checking');
         const response = await apiClient.checkBackendHealth();
-        
+
         if (response.success && response.data) {
           setBackendHealth(response.data);
           const isHealthy = response.data.database?.status === 'connected';
@@ -63,15 +71,14 @@ const AuthPage = () => {
       }
     };
 
+    const intervalId: NodeJS.Timeout = setInterval(checkConnection, 15000); // Check every 15 seconds
+
     // Initial check
     checkConnection();
 
-    // Set up periodic health checks
-    intervalId = setInterval(checkConnection, 15000); // Check every 15 seconds
-
     // Set up real-time connection monitoring
     const handleStatusChange = (status: string) => {
-      setConnectionStatus(status as any);
+      setConnectionStatus(status as 'checking' | 'connected' | 'disconnected');
     };
 
     apiClient.onConnectionStatusChange(handleStatusChange);
@@ -109,22 +116,22 @@ const AuthPage = () => {
   };
 
   const validatePhone = (phone: string) => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+    const phoneRegex = /^\+?[1-9][\d]{0,15}$/;
+    return phoneRegex.test(phone.replace(/[\s\-()]/g, ''));
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     const newErrors: Record<string, string> = {};
-    
+
     if (!signInData.email) {
       newErrors.email = 'Email is required';
     } else if (!validateEmail(signInData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    
+
     if (!signInData.password) {
       newErrors.password = 'Password is required';
     } else if (signInData.password.length < 6) {
@@ -148,28 +155,28 @@ const AuthPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     const newErrors: Record<string, string> = {};
-    
+
     if (!signUpData.name) {
       newErrors.name = 'Full name is required';
     } else if (signUpData.name.length < 2) {
       newErrors.name = 'Name must be at least 2 characters';
     }
-    
+
     if (!signUpData.email) {
       newErrors.email = 'Email is required';
     } else if (!validateEmail(signUpData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
-    
+
     if (!signUpData.password) {
       newErrors.password = 'Password is required';
     } else if (signUpData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    
+
     if (!signUpData.phone) {
       newErrors.phone = 'Phone number is required';
     } else if (!validatePhone(signUpData.phone)) {
@@ -300,20 +307,19 @@ const AuthPage = () => {
             transition={{ duration: 0.3 }}
             className="mb-6"
           >
-            <Alert className={`border-2 ${
-              connectionStatus === 'connected' 
-                ? 'border-green-200 bg-green-50' 
-                : connectionStatus === 'disconnected'
+            <Alert className={`border-2 ${connectionStatus === 'connected'
+              ? 'border-green-200 bg-green-50'
+              : connectionStatus === 'disconnected'
                 ? 'border-red-200 bg-red-50'
                 : 'border-yellow-200 bg-yellow-50'
-            }`}>
+              }`}>
               {getConnectionStatusIcon()}
               <AlertDescription className={
-                connectionStatus === 'connected' 
-                  ? 'text-green-800' 
+                connectionStatus === 'connected'
+                  ? 'text-green-800'
                   : connectionStatus === 'disconnected'
-                  ? 'text-red-800'
-                  : 'text-yellow-800'
+                    ? 'text-red-800'
+                    : 'text-yellow-800'
               }>
                 <div className="flex items-center justify-between">
                   <span>{getConnectionStatusMessage()}</span>
@@ -396,11 +402,10 @@ const AuthPage = () => {
                         setSignInData({ ...signInData, email: e.target.value });
                         if (errors.email) setErrors({ ...errors, email: '' });
                       }}
-                      className={`h-11 transition-all duration-200 ${
-                        errors.email 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                      }`}
+                      className={`h-11 transition-all duration-200 ${errors.email
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                        }`}
                     />
                     {errors.email && (
                       <motion.p
@@ -413,7 +418,7 @@ const AuthPage = () => {
                       </motion.p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">
                       Password
@@ -428,11 +433,10 @@ const AuthPage = () => {
                           setSignInData({ ...signInData, password: e.target.value });
                           if (errors.password) setErrors({ ...errors, password: '' });
                         }}
-                        className={`h-11 pr-10 transition-all duration-200 ${
-                          errors.password 
-                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                        }`}
+                        className={`h-11 pr-10 transition-all duration-200 ${errors.password
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                          }`}
                       />
                       <button
                         type="button"
@@ -486,11 +490,10 @@ const AuthPage = () => {
                           setSignUpData({ ...signUpData, name: e.target.value });
                           if (errors.name) setErrors({ ...errors, name: '' });
                         }}
-                        className={`h-11 transition-all duration-200 ${
-                          errors.name 
-                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                        }`}
+                        className={`h-11 transition-all duration-200 ${errors.name
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                          }`}
                       />
                       {errors.name && (
                         <motion.p
@@ -515,11 +518,10 @@ const AuthPage = () => {
                           setSignUpData({ ...signUpData, phone: e.target.value });
                           if (errors.phone) setErrors({ ...errors, phone: '' });
                         }}
-                        className={`h-11 transition-all duration-200 ${
-                          errors.phone 
-                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                        }`}
+                        className={`h-11 transition-all duration-200 ${errors.phone
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                          }`}
                       />
                       {errors.phone && (
                         <motion.p
@@ -547,11 +549,10 @@ const AuthPage = () => {
                         setSignUpData({ ...signUpData, email: e.target.value });
                         if (errors.email) setErrors({ ...errors, email: '' });
                       }}
-                      className={`h-11 transition-all duration-200 ${
-                        errors.email 
-                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                      }`}
+                      className={`h-11 transition-all duration-200 ${errors.email
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                        }`}
                     />
                     {errors.email && (
                       <motion.p
@@ -579,11 +580,10 @@ const AuthPage = () => {
                           setSignUpData({ ...signUpData, password: e.target.value });
                           if (errors.password) setErrors({ ...errors, password: '' });
                         }}
-                        className={`h-11 pr-10 transition-all duration-200 ${
-                          errors.password 
-                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                        }`}
+                        className={`h-11 pr-10 transition-all duration-200 ${errors.password
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                          }`}
                       />
                       <button
                         type="button"
@@ -636,11 +636,10 @@ const AuthPage = () => {
                           setSignUpData({ ...signUpData, age: e.target.value });
                           if (errors.age) setErrors({ ...errors, age: '' });
                         }}
-                        className={`h-11 transition-all duration-200 ${
-                          errors.age 
-                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
-                        }`}
+                        className={`h-11 transition-all duration-200 ${errors.age
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-purple-500 focus:ring-purple-500'
+                          }`}
                         min="16"
                         max="100"
                       />
@@ -697,7 +696,7 @@ const AuthPage = () => {
           transition={{ delay: 0.4, duration: 0.6 }}
           className="mt-8 grid grid-cols-3 gap-4 text-center"
         >
-          <motion.div 
+          <motion.div
             className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg hover:shadow-xl transition-all duration-300"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -705,7 +704,7 @@ const AuthPage = () => {
             <Users className="h-6 w-6 text-purple-600 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-700">Verified Professionals</p>
           </motion.div>
-          <motion.div 
+          <motion.div
             className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg hover:shadow-xl transition-all duration-300"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -713,7 +712,7 @@ const AuthPage = () => {
             <Shield className="h-6 w-6 text-pink-600 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-700">Secure Booking</p>
           </motion.div>
-          <motion.div 
+          <motion.div
             className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg hover:shadow-xl transition-all duration-300"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

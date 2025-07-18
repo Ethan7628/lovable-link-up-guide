@@ -33,45 +33,45 @@ const allowedOrigins = [
 app.use(cors({
     origin: function (origin, callback) {
         console.log('🌐 Request origin:', origin || 'no-origin');
-        
+
         // Allow requests with no origin (Postman, mobile apps, etc.)
         if (!origin) {
             console.log('✅ No origin - allowing request');
             return callback(null, true);
         }
-        
+
         // Check exact matches first
         if (allowedOrigins.includes(origin)) {
             console.log('✅ Origin allowed:', origin);
             return callback(null, true);
         }
-        
+
         // Check pattern matches
-        if (origin.includes('lovableproject.com') || 
+        if (origin.includes('lovableproject.com') ||
             origin.includes('lovable.app') ||
             origin.startsWith('http://localhost') ||
             origin.startsWith('https://localhost')) {
             console.log('✅ Pattern match allowed:', origin);
             return callback(null, true);
         }
-        
+
         console.log('⚠️ Origin not in whitelist:', origin);
         console.log('📋 Allowed origins:', allowedOrigins);
-        
+
         // For development, allow all origins temporarily
         if (process.env.NODE_ENV !== 'production') {
             console.log('🔧 Development mode - allowing origin');
             return callback(null, true);
         }
-        
+
         return callback(null, true); // Allow for now to prevent blocking
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'],
     allowedHeaders: [
-        'Content-Type', 
-        'Authorization', 
-        'x-auth-token', 
+        'Content-Type',
+        'Authorization',
+        'x-auth-token',
         'Cache-Control',
         'Access-Control-Allow-Origin',
         'Access-Control-Allow-Headers',
@@ -94,7 +94,7 @@ app.options('*', (req, res) => {
 });
 
 // Body parsing middleware
-app.use(express.json({ 
+app.use(express.json({
     limit: '50mb',
     verify: (req, res, buf) => {
         try {
@@ -113,34 +113,37 @@ app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     const origin = req.get('Origin') || 'no-origin';
     const userAgent = req.get('User-Agent') || 'unknown';
-    
+
     console.log(`📊 [${timestamp}] ${req.method} ${req.path}`);
     console.log(`   Origin: ${origin}`);
     console.log(`   User-Agent: ${userAgent.substring(0, 50)}...`);
-    
+
     // Log request body for POST/PUT requests (exclude sensitive data)
     if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
         const logBody = { ...req.body };
         if (logBody.password) logBody.password = '[HIDDEN]';
         console.log(`   Body:`, JSON.stringify(logBody).substring(0, 200));
     }
-    
+
     next();
 });
 
 // Health check endpoint with detailed info
 app.get('/api/health', (req, res) => {
     console.log('🏥 Health check requested');
-    
+
+    const { getConnectionState } = require('./config/db');
+    const dbState = getConnectionState();
     const healthData = {
-        status: 'OK',
+        status: dbState.isConnected ? 'OK' : 'ERROR',
         service: 'BodyConnect Backend',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development',
         version: '1.0.0',
         database: {
-            status: 'connected',
-            isConnected: true,
+            status: dbState.isConnected ? 'connected' : 'disconnected',
+            isConnected: dbState.isConnected,
+            error: dbState.error || null,
             host: 'MongoDB Atlas'
         },
         uptime: process.uptime(),
@@ -150,14 +153,13 @@ app.get('/api/health', (req, res) => {
             requestOrigin: req.get('Origin') || 'none'
         }
     };
-    
     res.status(200).json(healthData);
 });
 
 // Test endpoint for debugging
 app.get('/api/test', (req, res) => {
     console.log('🧪 Test endpoint hit');
-    res.json({ 
+    res.json({
         message: 'Backend is working!',
         timestamp: new Date().toISOString(),
         origin: req.get('Origin')
@@ -241,7 +243,7 @@ app.use((err, req, res, next) => {
     console.error('Request URL:', req.url);
     console.error('Request method:', req.method);
     console.error('Request headers:', req.headers);
-    
+
     // Don't send stack trace in production
     const errorResponse = {
         error: 'Internal server error',
@@ -249,18 +251,18 @@ app.use((err, req, res, next) => {
         timestamp: new Date().toISOString(),
         path: req.path
     };
-    
+
     if (process.env.NODE_ENV === 'development') {
         errorResponse.stack = err.stack;
     }
-    
+
     res.status(500).json(errorResponse);
 });
 
 // 404 handler - must be last
 app.use('*', (req, res) => {
     console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
+    res.status(404).json({
         error: 'Endpoint not found',
         path: req.originalUrl,
         method: req.method,
